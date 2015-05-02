@@ -4,8 +4,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/sogko/golang-rest-api-server-example/server"
-	"github.com/unrolled/render"
-	"gopkg.in/mgo.v2"
 	"net/http"
 )
 
@@ -19,12 +17,15 @@ var _ = Describe("Context", func() {
 
 	Describe("Database", func() {
 
-		var session *mgo.Session
+		var session *DatabaseSession
 		var db *Database
 
 		BeforeEach(func() {
 			request, _ = http.NewRequest("GET", "/test", nil)
-			session, _ = mgo.Dial("localhost")
+			session = NewSession(DatabaseOptions{
+				ServerName:   TestDatabaseServerName,
+				DatabaseName: TestDatabaseName,
+			})
 			db = &Database{session.DB("test-db")}
 		})
 
@@ -55,7 +56,7 @@ var _ = Describe("Context", func() {
 		var r *Renderer
 
 		BeforeEach(func() {
-			r = &Renderer{render.New(render.Options{})}
+			r = NewRenderer(RendererOptions{})
 		})
 		Context("when render is a valid object", func() {
 			It("returns original object", func() {

@@ -11,9 +11,12 @@ type Renderer struct {
 	*render.Render
 }
 
+// RendererOptions type
+type RendererOptions render.Options
+
 // NewRenderer Returns a new Renderer object
-func NewRenderer(options render.Options) *Renderer {
-	r := render.New(options)
+func NewRenderer(options RendererOptions) *Renderer {
+	r := render.New(render.Options(options))
 	return &Renderer{r}
 }
 

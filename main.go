@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/sogko/golang-rest-api-server-example/server"
-	"github.com/unrolled/render"
 )
 
 func main() {
@@ -13,7 +12,7 @@ func main() {
 			ServerName:   "localhost",
 			DatabaseName: "test-app",
 		}),
-		Renderer: server.NewRenderer(render.Options{
+		Renderer: server.NewRenderer(server.RendererOptions{
 			IndentJSON: true,
 		}),
 	}

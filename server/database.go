@@ -1,16 +1,11 @@
 package server
 
 import (
-	"errors"
 	"github.com/codegangsta/negroni"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"time"
 )
-
-// Customer collection name
-const CustomersCollection string = "customers"
 
 // DatabaseOptions struct
 //
@@ -64,31 +59,4 @@ func (session *DatabaseSession) UseDatabase() negroni.HandlerFunc {
 		SetDbCtx(r, db)
 		next(rw, r)
 	})
-}
-
-//---- Customer database operations -----
-
-// CreateCustomer Insert new customer document into the database
-func (db *Database) CreateCustomer(customer *Customer) error {
-	customer.ID = bson.NewObjectId()
-	return db.C(CustomersCollection).Insert(customer)
-}
-
-// GetCustomers Get list of customers
-func (db *Database) GetCustomers() (Customers, error) {
-	customers := Customers{}
-	err := db.C(CustomersCollection).Find(nil).All(&customers)
-	return customers, err
-}
-
-// GetCustomer Get customer specified by the id
-func (db *Database) GetCustomer(id string) (*Customer, error) {
-
-	if !bson.IsObjectIdHex(id) {
-		return nil, errors.New("Invalid ObjectId")
-	}
-
-	var customer Customer
-	err := db.C(CustomersCollection).FindId(bson.ObjectIdHex(id)).One(&customer)
-	return &customer, err
 }

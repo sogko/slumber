@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/sogko/golang-rest-api-server-example/server/models"
 	"net/http"
 )
 
@@ -27,7 +28,7 @@ func HandleCustomersPost(w http.ResponseWriter, req *http.Request) {
 	r := RendererCtx(req)
 	db := DbCtx(req)
 
-	var customer Customer
+	var customer models.Customer
 
 	// decode JSON body into Customer
 	decoder := json.NewDecoder(req.Body)
