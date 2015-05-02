@@ -5,6 +5,12 @@ import (
 	"net/http"
 )
 
+// Route type
+// Example of a route:
+// Name: 		"CustomersList"
+// Method: 		"GET"
+// Pattern: 	"/customers
+// HandlerFunc: func HandleCustomersGet(w http.ResponseWriter, req *http.Request) { ... }
 type Route struct {
 	Name        string
 	Method      string
@@ -12,11 +18,16 @@ type Route struct {
 	HandlerFunc http.HandlerFunc
 }
 
+// Routes type
 type Routes []Route
 
-type Router *mux.Router
+// Router type
+type Router struct {
+	*mux.Router
+}
 
-func NewRouter(routes *Routes) *mux.Router {
+// NewRouter Returns a new Router object
+func NewRouter(routes *Routes) *Router {
 	router := mux.NewRouter().StrictSlash(true)
 
 	for _, route := range *routes {
@@ -26,5 +37,5 @@ func NewRouter(routes *Routes) *mux.Router {
 			Name(route.Name).
 			Handler(route.HandlerFunc)
 	}
-	return router
+	return &Router{router}
 }

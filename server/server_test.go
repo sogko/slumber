@@ -7,7 +7,7 @@ import (
 	"github.com/modocache/gory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/sogko/rest-api-server/server"
+	. "github.com/sogko/golang-rest-api-server-example/server"
 	"github.com/unrolled/render"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
@@ -31,7 +31,7 @@ var _ = Describe("Server", func() {
 	renderer = NewRenderer(render.Options{
 		IndentJSON: true,
 	})
-	components := ServerComponents{
+	components := Components{
 		DatabaseSession: session,
 		Renderer:        renderer,
 	}
@@ -60,13 +60,13 @@ var _ = Describe("Server", func() {
 		}, 5)
 	})
 
-	Describe("GET /customers", func() {
+	Describe("GET /api/v1/customers", func() {
 
 		Context("when no customers exist", func() {
 
 			BeforeEach(func() {
 				// serve request
-				request, _ = http.NewRequest("GET", "/customers", nil)
+				request, _ = http.NewRequest("GET", "/api/v1/customers", nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -91,7 +91,7 @@ var _ = Describe("Server", func() {
 				collection.Insert(gory.Build("customer"))
 
 				// serve request
-				request, _ = http.NewRequest("GET", "/customers", nil)
+				request, _ = http.NewRequest("GET", "/api/v1/customers", nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -109,7 +109,7 @@ var _ = Describe("Server", func() {
 		})
 	})
 
-	Describe("POST /customers", func() {
+	Describe("POST /api/v1/customers", func() {
 		Context("when adding one valid customer", func() {
 
 			var newCustomer *Customer
@@ -118,7 +118,7 @@ var _ = Describe("Server", func() {
 				newCustomer = gory.Build("customer").(*Customer)
 				body, _ := json.Marshal(newCustomer)
 
-				request, _ = http.NewRequest("POST", "/customers", bytes.NewReader(body))
+				request, _ = http.NewRequest("POST", "/api/v1/customers", bytes.NewReader(body))
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -138,7 +138,7 @@ var _ = Describe("Server", func() {
 
 			BeforeEach(func() {
 
-				request, _ = http.NewRequest("POST", "/customers", bytes.NewReader([]byte("Bad JSON")))
+				request, _ = http.NewRequest("POST", "/api/v1/customers", bytes.NewReader([]byte("Bad JSON")))
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -160,7 +160,7 @@ var _ = Describe("Server", func() {
 				newCustomer = gory.Build("customerMissingFirstName").(*Customer)
 				body, _ := json.Marshal(newCustomer)
 
-				request, _ = http.NewRequest("POST", "/customers", bytes.NewReader(body))
+				request, _ = http.NewRequest("POST", "/api/v1/customers", bytes.NewReader(body))
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -176,7 +176,7 @@ var _ = Describe("Server", func() {
 
 	})
 
-	Describe("GET /customers/{id}", func() {
+	Describe("GET /api/v1/customers/{id}", func() {
 		Context("when customer exists", func() {
 
 			var customer *Customer
@@ -185,11 +185,11 @@ var _ = Describe("Server", func() {
 				// insert a customer into database
 				customer = gory.Build("customer").(*Customer)
 				collection := session.DB(session.DatabaseName).C("customers")
-				customer.Id = bson.NewObjectId()
+				customer.ID = bson.NewObjectId()
 				collection.Insert(customer)
 
 				// serve request
-				request, _ = http.NewRequest("GET", fmt.Sprintf("/customers/%v", customer.Id.Hex()), nil)
+				request, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/customers/%v", customer.ID.Hex()), nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -201,7 +201,7 @@ var _ = Describe("Server", func() {
 				retCustomer := bodyJSON["customer"].(map[string]interface{})
 
 				Expect(bodyJSON["success"]).To(Equal(true))
-				Expect(retCustomer["_id"]).To(Equal(customer.Id.Hex()))
+				Expect(retCustomer["_id"]).To(Equal(customer.ID.Hex()))
 				Expect(retCustomer["firstName"]).To(Equal(customer.FirstName))
 			})
 		})
@@ -211,7 +211,7 @@ var _ = Describe("Server", func() {
 			BeforeEach(func() {
 
 				// serve request
-				request, _ = http.NewRequest("GET", fmt.Sprintf("/customers/%v", bson.NewObjectId().Hex()), nil)
+				request, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/customers/%v", bson.NewObjectId().Hex()), nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -230,7 +230,7 @@ var _ = Describe("Server", func() {
 			BeforeEach(func() {
 
 				// serve request
-				request, _ = http.NewRequest("GET", "/customers/INVALIDID", nil)
+				request, _ = http.NewRequest("GET", "/api/v1/customers/INVALIDID", nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})

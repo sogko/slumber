@@ -6,7 +6,7 @@ import (
 	"github.com/modocache/gory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/sogko/rest-api-server/server"
+	. "github.com/sogko/golang-rest-api-server-example/server"
 	"testing"
 )
 
@@ -38,14 +38,14 @@ func defineFactories() {
 		factory["FirstName"] = "John"
 		factory["LastName"] = "Doe"
 		factory["Email"] = gory.Sequence(func(n int) interface{} {
-			return fmt.Sprint("john-doe-%d@example.com", n)
+			return fmt.Sprintf("john-doe-%d@example.com", n)
 		})
 	})
 
 	gory.Define("customerMissingFirstName", Customer{}, func(factory gory.Factory) {
 		factory["LastName"] = "Doe"
 		factory["Email"] = gory.Sequence(func(n int) interface{} {
-			return fmt.Sprint("john-doe-%d@example.com", n)
+			return fmt.Sprintf("john-doe-%d@example.com", n)
 		})
 	})
 }

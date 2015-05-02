@@ -6,13 +6,13 @@ import (
 	"net/http"
 )
 
-// Handler for GET /customers
+// HandleCustomersGet is the controller for GET /customers
 func HandleCustomersGet(w http.ResponseWriter, req *http.Request) {
-	r := RenderCtx(req)
+	r := RendererCtx(req)
 	db := DbCtx(req)
 
-	var message interface{} = nil
-	customers, err := GetCustomers(db)
+	var message interface{}
+	customers, err := db.GetCustomers()
 	success := (err == nil)
 
 	r.JSON(w, http.StatusOK, map[string]interface{}{
@@ -22,9 +22,9 @@ func HandleCustomersGet(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// Handler for POST /customers
+// HandleCustomersPost is the controller for POST /customers
 func HandleCustomersPost(w http.ResponseWriter, req *http.Request) {
-	r := RenderCtx(req)
+	r := RendererCtx(req)
 	db := DbCtx(req)
 
 	var customer Customer
@@ -49,7 +49,7 @@ func HandleCustomersPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = CreateCustomer(db, &customer)
+	err = db.CreateCustomer(&customer)
 	if err != nil {
 		r.JSON(w, http.StatusBadRequest, map[string]interface{}{
 			"message": "Failed to save customer object",
@@ -64,15 +64,15 @@ func HandleCustomersPost(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
-// Handler for GET /customer/{id}
+// HandleCustomerGet is the controller for GET /customer/{id}
 func HandleCustomerGet(w http.ResponseWriter, req *http.Request) {
-	r := RenderCtx(req)
+	r := RendererCtx(req)
 	db := DbCtx(req)
 	params := mux.Vars(req)
 	id := params["id"]
 
-	var message interface{} = nil
-	customer, err := GetCustomer(db, id)
+	var message interface{}
+	customer, err := db.GetCustomer(id)
 	if err != nil {
 		message = err.Error()
 		customer = nil

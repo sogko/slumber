@@ -2,39 +2,41 @@ package server
 
 import (
 	"github.com/gorilla/context"
-	"github.com/unrolled/render"
-	"gopkg.in/mgo.v2"
 	"net/http"
 )
 
 type key int
 
-// Request context keys
+// Request context key for Database
 const DbKey key = 0
+
+// Request context key for Renderer
 const RendererKey key = 1
 
-// Sets the mgo.Database reference for the given request context
-func SetDbCtx(r *http.Request, val *mgo.Database) {
+// SetDbCtx Sets the Database reference for the given request context
+func SetDbCtx(r *http.Request, val *Database) *Database {
 	context.Set(r, DbKey, val)
+	return val
 }
 
-// Returns the mgo.Database reference for the given request context
-func DbCtx(r *http.Request) *mgo.Database {
+// DbCtx Returns the Database reference for the given request context
+func DbCtx(r *http.Request) *Database {
 	if db := context.Get(r, DbKey); db != nil {
-		return db.(*mgo.Database)
+		return db.(*Database)
 	}
 	return nil
 }
 
-// Set the render.Render reference for the given request context
-func SetRenderCtx(r *http.Request, val *render.Render) {
+// SetRendererCtx Set the Render reference for the given request context
+func SetRendererCtx(r *http.Request, val *Renderer) *Renderer {
 	context.Set(r, RendererKey, val)
+	return val
 }
 
-// Returns the render.Render reference for the given request context
-func RenderCtx(r *http.Request) *render.Render {
+// RendererCtx Returns the Render reference for the given request context
+func RendererCtx(r *http.Request) *Renderer {
 	if r := context.Get(r, RendererKey); r != nil {
-		return r.(*render.Render)
+		return r.(*Renderer)
 	}
 	return nil
 }

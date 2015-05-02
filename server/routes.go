@@ -1,9 +1,10 @@
 package server
 
-func LoadRoutes() *Routes {
+// GetRoutes Wire API routes to controllers (http.HandlerFunc)
+func GetRoutes() *Routes {
 	return &Routes{
-		Route{"CustomersList", "GET", "/customers", HandleCustomersGet},
-		Route{"CustomerCreate", "POST", "/customers", HandleCustomersPost},
-		Route{"CustomerGet", "GET", "/customers/{id}", HandleCustomerGet},
+		Route{"CustomersList", "GET", "/api/v1/customers", HandleCustomersGet},
+		Route{"CustomerCreate", "POST", "/api/v1/customers", HandleCustomersPost},
+		Route{"CustomerGet", "GET", "/api/v1/customers/{id}", HandleCustomerGet},
 	}
 }

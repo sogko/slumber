@@ -3,7 +3,7 @@ package server_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/sogko/rest-api-server/server"
+	. "github.com/sogko/golang-rest-api-server-example/server"
 	"github.com/unrolled/render"
 	"gopkg.in/mgo.v2"
 	"net/http"
@@ -20,12 +20,12 @@ var _ = Describe("Context", func() {
 	Describe("Database", func() {
 
 		var session *mgo.Session
-		var db *mgo.Database
+		var db *Database
 
 		BeforeEach(func() {
 			request, _ = http.NewRequest("GET", "/test", nil)
 			session, _ = mgo.Dial("localhost")
-			db = session.DB("test-db")
+			db = &Database{session.DB("test-db")}
 		})
 
 		Context("when db is a valid object", func() {
@@ -52,25 +52,25 @@ var _ = Describe("Context", func() {
 
 	Describe("Render", func() {
 
-		var r *render.Render
+		var r *Renderer
 
 		BeforeEach(func() {
-			r = render.New(render.Options{})
+			r = &Renderer{render.New(render.Options{})}
 		})
 		Context("when render is a valid object", func() {
 			It("returns original object", func() {
-				SetRenderCtx(request, r)
+				SetRendererCtx(request, r)
 
-				retRender := RenderCtx(request)
-				Expect(retRender).To(Equal(r))
+				renderer := RendererCtx(request)
+				Expect(renderer).To(Equal(r))
 			})
 		})
 
 		Context("when render does not exist in context", func() {
 			It("returns original object", func() {
 
-				retRender := RenderCtx(request)
-				Expect(retRender).To(BeNil())
+				renderer := RendererCtx(request)
+				Expect(renderer).To(BeNil())
 			})
 		})
 	})
