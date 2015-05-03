@@ -1,0 +1,20 @@
+mode: atomic
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:25.51,30.47 2 84
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:76.2,78.42 3 84
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:90.2,90.16 1 84
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:30.47,41.53 6 105
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:55.3,57.22 3 105
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:62.3,68.43 5 84
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:73.3,73.19 1 84
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:41.53,43.45 2 63
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:43.45,45.20 2 84
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:48.5,48.19 1 84
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:45.20,47.6 1 7
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:48.19,50.6 1 77
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:57.22,59.4 1 21
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:68.43,71.4 2 35
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:78.42,81.41 3 105
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:88.3,88.36 1 105
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:81.41,83.18 2 42
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:86.4,86.28 1 42
+github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:83.18,85.5 1 7

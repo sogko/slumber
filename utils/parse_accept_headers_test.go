@@ -4,7 +4,7 @@ import (
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/sogko/golang-rest-api-server-example/server/utils"
+	. "github.com/sogko/golang-rest-api-server-example/utils"
 )
 
 var _ = Describe("ParseAcceptHeaders", func() {
