@@ -17,14 +17,14 @@ type Server struct {
 type Components struct {
 	DatabaseSession *DatabaseSession
 	Renderer        *Renderer
+	Routes          *Routes
 }
 
 // NewServer Returns a new Server object
 func NewServer(components *Components) *Server {
 
 	// set up router
-	routes := GetRoutes()
-	r := NewRouter(routes)
+	r := NewRouter(components.Routes)
 
 	// set up server and middlewares
 	n := negroni.Classic()

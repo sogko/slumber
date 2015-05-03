@@ -15,6 +15,7 @@ func main() {
 		Renderer: server.NewRenderer(server.RendererOptions{
 			IndentJSON: true,
 		}),
+		Routes: GetRoutes(),
 	}
 
 	// init server and run

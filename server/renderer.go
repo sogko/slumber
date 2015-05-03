@@ -24,7 +24,7 @@ func NewRenderer(options RendererOptions) *Renderer {
 func (renderer *Renderer) UseRenderer() negroni.HandlerFunc {
 	return negroni.HandlerFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 		// create a new renderer and save it in the  request context
-
+		// unrolled/render is a global object that is thread-safe by desi
 		SetRendererCtx(r, renderer)
 		next(rw, r)
 	})

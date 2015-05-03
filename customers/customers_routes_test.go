@@ -1,4 +1,4 @@
-package server_test
+package customers_test
 
 import (
 	"bytes"
@@ -7,14 +7,16 @@ import (
 	"github.com/modocache/gory"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/sogko/golang-rest-api-server-example"
+	. "github.com/sogko/golang-rest-api-server-example/customers"
 	. "github.com/sogko/golang-rest-api-server-example/server"
-	. "github.com/sogko/golang-rest-api-server-example/server/models"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"net/http/httptest"
 )
 
-var _ = Describe("Routes * /api/v1/customers", func() {
+var _ = Describe("Routes * /api/customers", func() {
+
 	var server *Server
 	var session *DatabaseSession
 	var renderer *Renderer
@@ -36,6 +38,7 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 		components := Components{
 			DatabaseSession: session,
 			Renderer:        renderer,
+			Routes:          GetRoutes(),
 		}
 		server = NewServer(&components)
 
@@ -48,13 +51,13 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 		session.DB(session.DatabaseName).DropDatabase()
 	})
 
-	Describe("GET /api/v1/customers", func() {
+	Describe("GET /api/customers", func() {
 
 		Context("when no customers exist", func() {
 
 			BeforeEach(func() {
 				// serve request
-				request, _ = http.NewRequest("GET", "/api/v1/customers", nil)
+				request, _ = http.NewRequest("GET", "/api/customers", nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -79,7 +82,7 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 				collection.Insert(gory.Build("customer"))
 
 				// serve request
-				request, _ = http.NewRequest("GET", "/api/v1/customers", nil)
+				request, _ = http.NewRequest("GET", "/api/customers", nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -97,7 +100,7 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 		})
 	})
 
-	Describe("POST /api/v1/customers", func() {
+	Describe("POST /api/customers", func() {
 		Context("when adding one valid customer", func() {
 
 			var newCustomer *Customer
@@ -106,7 +109,7 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 				newCustomer = gory.Build("customer").(*Customer)
 				body, _ := json.Marshal(newCustomer)
 
-				request, _ = http.NewRequest("POST", "/api/v1/customers", bytes.NewReader(body))
+				request, _ = http.NewRequest("POST", "/api/customers", bytes.NewReader(body))
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -125,8 +128,7 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 		Context("when POSTing a malformed JSON body", func() {
 
 			BeforeEach(func() {
-
-				request, _ = http.NewRequest("POST", "/api/v1/customers", bytes.NewReader([]byte("Bad JSON")))
+				request, _ = http.NewRequest("POST", "/api/customers", bytes.NewReader([]byte("Bad JSON")))
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -148,7 +150,7 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 				newCustomer = gory.Build("customerMissingFirstName").(*Customer)
 				body, _ := json.Marshal(newCustomer)
 
-				request, _ = http.NewRequest("POST", "/api/v1/customers", bytes.NewReader(body))
+				request, _ = http.NewRequest("POST", "/api/customers", bytes.NewReader(body))
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -164,7 +166,8 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 
 	})
 
-	Describe("GET /api/v1/customers/{id}", func() {
+	Describe("GET /api/customers/{id}", func() {
+
 		Context("when customer exists", func() {
 
 			var customer *Customer
@@ -177,7 +180,7 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 				collection.Insert(customer)
 
 				// serve request
-				request, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/customers/%v", customer.ID.Hex()), nil)
+				request, _ = http.NewRequest("GET", fmt.Sprintf("/api/customers/%v", customer.ID.Hex()), nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -199,8 +202,8 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 
 			BeforeEach(func() {
 
-				// serve request
-				request, _ = http.NewRequest("GET", fmt.Sprintf("/api/v1/customers/%v", bson.NewObjectId().Hex()), nil)
+				// serve request with a customer Id we know its not in the database
+				request, _ = http.NewRequest("GET", fmt.Sprintf("/api/customers/%v", bson.NewObjectId().Hex()), nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})
@@ -219,7 +222,7 @@ var _ = Describe("Routes * /api/v1/customers", func() {
 			BeforeEach(func() {
 
 				// serve request
-				request, _ = http.NewRequest("GET", "/api/v1/customers/INVALIDID", nil)
+				request, _ = http.NewRequest("GET", "/api/customers/INVALIDID", nil)
 				server.ServeHTTP(recorder, request)
 				bodyJSON = MapFromJSON(recorder.Body.Bytes())
 			})

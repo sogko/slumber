@@ -4,11 +4,13 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/sogko/golang-rest-api-server-example/server"
+	"net/http"
 )
 
 var _ = Describe("Server", func() {
 	var server *Server
 	var session *DatabaseSession
+	var routes *Routes
 	var renderer *Renderer
 
 	BeforeEach(func() {
@@ -26,9 +28,21 @@ var _ = Describe("Server", func() {
 		})
 
 		renderer = NewRenderer(RendererOptions{})
+
+		routes = &Routes{
+			Route{"Test", "GET", "/api/test", "0.1", RouteHandlers{
+				"0.1": func(rw http.ResponseWriter, req *http.Request) {
+					r := RendererCtx(req)
+					r.JSON(rw, http.StatusOK, map[string]string{
+						"ok": "ok",
+					})
+				},
+			}},
+		}
 		components := Components{
 			DatabaseSession: session,
 			Renderer:        renderer,
+			Routes:          routes,
 		}
 		server = NewServer(&components)
 	})

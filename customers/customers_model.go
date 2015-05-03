@@ -1,4 +1,4 @@
-package models
+package customers
 
 import (
 	"gopkg.in/mgo.v2/bson"

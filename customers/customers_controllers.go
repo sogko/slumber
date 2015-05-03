@@ -1,19 +1,19 @@
-package server
+package customers
 
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/sogko/golang-rest-api-server-example/server/models"
+	"github.com/sogko/golang-rest-api-server-example/server"
 	"net/http"
 )
 
 // HandleCustomersGet is the controller for GET /customers
 func HandleCustomersGet(w http.ResponseWriter, req *http.Request) {
-	r := RendererCtx(req)
-	db := DbCtx(req)
+	r := server.RendererCtx(req)
+	db := server.DbCtx(req)
 
 	var message interface{}
-	customers, err := db.GetCustomers()
+	customers, err := GetCustomers(db)
 	success := (err == nil)
 
 	r.JSON(w, http.StatusOK, map[string]interface{}{
@@ -25,10 +25,10 @@ func HandleCustomersGet(w http.ResponseWriter, req *http.Request) {
 
 // HandleCustomersPost is the controller for POST /customers
 func HandleCustomersPost(w http.ResponseWriter, req *http.Request) {
-	r := RendererCtx(req)
-	db := DbCtx(req)
+	r := server.RendererCtx(req)
+	db := server.DbCtx(req)
 
-	var customer models.Customer
+	var customer Customer
 
 	// decode JSON body into Customer
 	decoder := json.NewDecoder(req.Body)
@@ -50,7 +50,7 @@ func HandleCustomersPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = db.CreateCustomer(&customer)
+	err = CreateCustomer(db, &customer)
 	if err != nil {
 		r.JSON(w, http.StatusBadRequest, map[string]interface{}{
 			"message": "Failed to save customer object",
@@ -67,13 +67,13 @@ func HandleCustomersPost(w http.ResponseWriter, req *http.Request) {
 
 // HandleCustomerGet is the controller for GET /customer/{id}
 func HandleCustomerGet(w http.ResponseWriter, req *http.Request) {
-	r := RendererCtx(req)
-	db := DbCtx(req)
+	r := server.RendererCtx(req)
+	db := server.DbCtx(req)
 	params := mux.Vars(req)
 	id := params["id"]
 
 	var message interface{}
-	customer, err := db.GetCustomer(id)
+	customer, err := GetCustomer(db, id)
 	if err != nil {
 		message = err.Error()
 		customer = nil
