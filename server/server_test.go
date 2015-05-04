@@ -9,9 +9,7 @@ import (
 
 var _ = Describe("Server", func() {
 	var server *Server
-	var session *DatabaseSession
 	var routes *Routes
-	var renderer *Renderer
 
 	BeforeEach(func() {
 	})
@@ -20,14 +18,6 @@ var _ = Describe("Server", func() {
 	})
 
 	Describe("Default server config", func() {
-
-		// set up server with test components
-		session = NewSession(DatabaseOptions{
-			ServerName:   TestDatabaseServerName,
-			DatabaseName: TestDatabaseName,
-		})
-
-		renderer = NewRenderer(RendererOptions{})
 
 		routes = &Routes{
 			Route{"Test", "GET", "/api/test", "0.1", RouteHandlers{
@@ -39,12 +29,14 @@ var _ = Describe("Server", func() {
 				},
 			}},
 		}
-		components := Components{
-			DatabaseSession: session,
-			Renderer:        renderer,
-			Routes:          routes,
-		}
-		server = NewServer(&components)
+		server = NewServer(&Config{
+			Database: &DatabaseOptions{
+				ServerName:   TestDatabaseServerName,
+				DatabaseName: TestDatabaseName,
+			},
+			Renderer: &RendererOptions{},
+			Routes:   routes,
+		})
 	})
 
 	Describe("Bad database server config", func() {

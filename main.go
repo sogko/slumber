@@ -6,20 +6,23 @@ import (
 
 func main() {
 
-	// initialize server components
-	components := server.Components{
-		DatabaseSession: server.NewSession(server.DatabaseOptions{
+	// load routes
+	routes := GetRoutes()
+
+	// set server configuration
+	config := server.Config{
+		Database: &server.DatabaseOptions{
 			ServerName:   "localhost",
-			DatabaseName: "test-app",
-		}),
-		Renderer: server.NewRenderer(server.RendererOptions{
+			DatabaseName: "test-go-app",
+		},
+		Renderer: &server.RendererOptions{
 			IndentJSON: true,
-		}),
-		Routes: GetRoutes(),
+		},
+		Routes: routes,
 	}
 
 	// init server and run
-	s := server.NewServer(&components)
+	s := server.NewServer(&config)
+	// bam!
 	s.Run(":3001")
-
 }

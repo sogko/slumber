@@ -53,38 +53,39 @@ func NewRouter(routes *Routes) *Router {
 		}
 
 		// matcherFunc matches the handler to the correct API version based on its `accept` header
-		matcherFunc := func(r *http.Request, rm *mux.RouteMatch) bool {
+		matcherFunc := func(r Route) func(r *http.Request, rm *mux.RouteMatch) bool {
+			return func(req *http.Request, rm *mux.RouteMatch) bool {
+				headers := utils.ParseAcceptHeaders(req.Header.Get("accept"))
+				rm.Handler = defaultHandler
 
-			headers := utils.ParseAcceptHeaders(r.Header.Get("accept"))
-			rm.Handler = defaultHandler
-
-			// try to match a handler to the specified `version` params
-			// else we will fall back to the default handler
-			for _, h := range headers {
-				m := h.MediaType
-				// check if media type is `application/json` type or `application/[*]+json` suffix
-				if !(m.Type == "application" && (m.SubType == "json" || m.Suffix == "json")) {
-					continue
+				// try to match a handler to the specified `version` params
+				// else we will fall back to the default handler
+				for _, h := range headers {
+					m := h.MediaType
+					// check if media type is `application/json` type or `application/[*]+json` suffix
+					if !(m.Type == "application" && (m.SubType == "json" || m.Suffix == "json")) {
+						continue
+					}
+					// if its the right application type, check if a version specified
+					version, hasVersion := m.Parameters["version"]
+					if !hasVersion {
+						continue
+					}
+					if handler, ok := r.RouteHandlers[RouteHandlerVersion(version)]; ok {
+						// found handler for specified version
+						rm.Handler = handler
+						break
+					}
 				}
-				// if its the right application type, check if a version specified
-				version, hasVersion := m.Parameters["version"]
-				if !hasVersion {
-					continue
-				}
-				if handler, ok := route.RouteHandlers[RouteHandlerVersion(version)]; ok {
-					// found handler for specified version
-					rm.Handler = handler
-					break
-				}
+				return true
 			}
-			return true
 		}
 
 		router.
 			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
-			MatcherFunc(matcherFunc)
+			MatcherFunc(matcherFunc(route))
 
 	}
 	return &Router{router}

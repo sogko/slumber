@@ -19,20 +19,19 @@ func handleStub(version string) http.HandlerFunc {
 
 var _ = Describe("Router", func() {
 	var server *Server
-	var session *DatabaseSession
-	var renderer *Renderer
 	var route Route
 	var request *http.Request
 	var recorder *httptest.ResponseRecorder
 	var bodyJSON map[string]interface{}
 
-	// set up server with test components
-	session = NewSession(DatabaseOptions{
+	var dbOptions DatabaseOptions = DatabaseOptions{
 		ServerName:   TestDatabaseServerName,
 		DatabaseName: TestDatabaseName,
-	})
-	renderer = NewRenderer(RendererOptions{})
+	}
 
+	var renderOptions RendererOptions = RendererOptions{}
+
+	// define test route
 	route = Route{
 		Name:           "Test",
 		Method:         "GET",
@@ -49,10 +48,10 @@ var _ = Describe("Router", func() {
 
 		BeforeEach(func() {
 			routes := &Routes{route}
-			server = NewServer(&Components{
-				DatabaseSession: session,
-				Renderer:        renderer,
-				Routes:          routes,
+			server = NewServer(&Config{
+				Database: &dbOptions,
+				Renderer: &renderOptions,
+				Routes:   routes,
 			})
 
 			// record HTTP responses
@@ -142,9 +141,9 @@ var _ = Describe("Router", func() {
 
 		It("should panic", func() {
 			Expect(func() {
-				server = NewServer(&Components{
-					DatabaseSession: session,
-					Renderer:        renderer,
+				server = NewServer(&Config{
+					Database: &dbOptions,
+					Renderer: &renderOptions,
 				})
 
 			}).Should(Panic())
@@ -160,10 +159,10 @@ var _ = Describe("Router", func() {
 						"0.1": handleStub("0.1"),
 					}},
 				}
-				server = NewServer(&Components{
-					DatabaseSession: session,
-					Renderer:        renderer,
-					Routes:          routes,
+				server = NewServer(&Config{
+					Database: &dbOptions,
+					Renderer: &renderOptions,
+					Routes:   routes,
 				})
 
 			}).Should(Panic())

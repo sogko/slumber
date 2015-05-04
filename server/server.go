@@ -13,26 +13,32 @@ type Server struct {
 	*negroni.Negroni
 }
 
-// Components type
-type Components struct {
-	DatabaseSession *DatabaseSession
-	Renderer        *Renderer
-	Routes          *Routes
+// Config type
+type Config struct {
+	Database *DatabaseOptions
+	Renderer *RendererOptions
+	Routes   *Routes
 }
 
 // NewServer Returns a new Server object
-func NewServer(components *Components) *Server {
+func NewServer(options *Config) *Server {
 
 	// set up router
-	r := NewRouter(components.Routes)
+	router := NewRouter(options.Routes)
+
+	// set up db session
+	session := NewSession(*options.Database)
+
+	// set up renderer
+	renderer := NewRenderer(*options.Renderer)
 
 	// set up server and middlewares
 	n := negroni.Classic()
-	n.Use(components.DatabaseSession.UseDatabase())
-	n.Use(components.Renderer.UseRenderer())
+	n.Use(session.UseDatabase())
+	n.Use(renderer.UseRenderer())
 
 	// add router and clear mux.context values at the end of request life-times
-	n.UseHandler(context.ClearHandler(r))
+	n.UseHandler(context.ClearHandler(router))
 
 	return &Server{n}
 }
