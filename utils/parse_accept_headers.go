@@ -22,6 +22,9 @@ type AcceptHeader struct {
 
 type AcceptHeaders []AcceptHeader
 
+// mediaTypeRegExp match ((type)/(subtype)((+)(suffix))?)
+var mediaTypeRegExp = regexp.MustCompile(`^([\w\*\-]+)\/([\w\*\.\-]+)((\+)(\w+))?`)
+
 func ParseAcceptHeaders(str string) AcceptHeaders {
 
 	var headers AcceptHeaders
@@ -52,8 +55,7 @@ func ParseAcceptHeaders(str string) AcceptHeaders {
 		}
 
 		// match ((type)/(subtype)((+)(suffix))?)
-		r, _ := regexp.Compile("^([\\w\\*\\-]+)\\/([\\w\\*\\.\\-]+)((\\+)(\\w+))?")
-		match := r.FindStringSubmatch(mediaType.String)
+		match := mediaTypeRegExp.FindStringSubmatch(mediaType.String)
 		if len(match) == 0 {
 			return mediaType
 		}
