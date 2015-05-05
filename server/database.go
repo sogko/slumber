@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/codegangsta/negroni"
 	"gopkg.in/mgo.v2"
 	"net/http"
 	"time"
@@ -49,14 +48,12 @@ func NewSession(options DatabaseOptions) *DatabaseSession {
 	return &DatabaseSession{session, options}
 }
 
-// UseDatabase Returns a negroni middleware HandlerFunc that creates and saves a database session into request context
-func (session *DatabaseSession) UseDatabase() negroni.HandlerFunc {
-	return negroni.HandlerFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-		// clone the `global` mgo session and save the named database in the request context for thread-safety
-		s := session.Clone()
-		defer s.Close()
-		db := &Database{s.DB(session.DatabaseName)}
-		SetDbCtx(r, db)
-		next(rw, r)
-	})
+// HandlerWithNext Returns a middleware HandlerFunc that creates and saves a database session into request context
+func (session *DatabaseSession) HandlerWithNext(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	// clone the `global` mgo session and save the named database in the request context for thread-safety
+	s := session.Clone()
+	defer s.Close()
+	db := &Database{s.DB(session.DatabaseName)}
+	SetDbCtx(r, db)
+	next(rw, r)
 }

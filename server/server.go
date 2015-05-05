@@ -34,8 +34,8 @@ func NewServer(options *Config) *Server {
 
 	// set up server and middlewares
 	n := negroni.Classic()
-	n.Use(session.UseDatabase())
-	n.Use(renderer.UseRenderer())
+	n.Use(negroni.HandlerFunc(session.HandlerWithNext))
+	n.Use(negroni.HandlerFunc(renderer.HandlerWithNext))
 
 	// add router and clear mux.context values at the end of request life-times
 	n.UseHandler(context.ClearHandler(router))
