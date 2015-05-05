@@ -1,4 +1,7 @@
 mode: atomic
+github.com/sogko/golang-rest-api-server-example/utils/test_helpers.go:8.54,11.16 3 2
+github.com/sogko/golang-rest-api-server-example/utils/test_helpers.go:14.2,14.40 1 1
+github.com/sogko/golang-rest-api-server-example/utils/test_helpers.go:11.16,13.3 1 1
 github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:28.51,33.47 2 12
 github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:78.2,80.42 3 12
 github.com/sogko/golang-rest-api-server-example/utils/parse_accept_headers.go:92.2,92.16 1 12
