@@ -113,7 +113,7 @@ var _ = Describe("JWT", func() {
 			var claims *utils.TokenClaims
 
 			BeforeEach(func() {
-				// a different algorithm'
+				// a different algorithm
 				token := jwt.New(jwt.SigningMethodHS256)
 				token.Claims = map[string]interface{}{
 					"id":     originalClaims.ID,

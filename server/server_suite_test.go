@@ -1,7 +1,6 @@
 package server_test
 
 import (
-	"encoding/json"
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/config"
@@ -25,12 +24,3 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 })
-
-func MapFromJSON(data []byte) map[string]interface{} {
-	var result interface{}
-	err := json.Unmarshal(data, &result)
-	if err != nil {
-		panic(fmt.Sprintf("MapFromJSON(): Not a valid JSON body\n%v", string(data)))
-	}
-	return result.(map[string]interface{})
-}
