@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/golang-rest-api-server-example/middlewares"
 	"github.com/sogko/golang-rest-api-server-example/utils"
 	"net/http"
 )
@@ -12,17 +14,18 @@ import (
 type RouteHandlerVersion string
 
 // RouteHandlers is a map of route version to its handler
-type RouteHandlers map[RouteHandlerVersion]http.HandlerFunc
+type RouteHandlers map[RouteHandlerVersion]domain.ContextHandlerFunc
 
 // Route type
 // Note that DefaultVersion must exists in RouteHandlers map
-// See server/routes.go for examples
+// See routes.go for examples
 type Route struct {
-	Name           string
-	Method         string
-	Pattern        string
-	DefaultVersion RouteHandlerVersion
-	RouteHandlers  RouteHandlers
+	Name                 string
+	Method               string
+	Pattern              string
+	DefaultVersion       RouteHandlerVersion
+	RouteHandlers        RouteHandlers
+	AccessControlHandler RouteHandlers
 }
 
 // Routes type
@@ -34,19 +37,21 @@ type Router struct {
 }
 
 // matcherFunc matches the handler to the correct API version based on its `accept` header
-func matcherFunc(r Route, defaultHandler http.HandlerFunc) func(r *http.Request, rm *mux.RouteMatch) bool {
+func matcherFunc(r Route, defaultHandler domain.ContextHandlerFunc) func(r *http.Request, rm *mux.RouteMatch) bool {
+	ctx := middlewares.Context{}
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
-		headers := utils.ParseAcceptHeaders(req.Header.Get("accept"))
-		rm.Handler = defaultHandler
+		acceptHeaders := utils.ParseAcceptHeaders(req.Header.Get("accept"))
+		rm.Handler = ctx.Inject(defaultHandler)
 
 		// try to match a handler to the specified `version` params
 		// else we will fall back to the default handler
-		for _, h := range headers {
+		for _, h := range acceptHeaders {
 			m := h.MediaType
 			// check if media type is `application/json` type or `application/[*]+json` suffix
 			if !(m.Type == "application" && (m.SubType == "json" || m.Suffix == "json")) {
 				continue
 			}
+
 			// if its the right application type, check if a version specified
 			version, hasVersion := m.Parameters["version"]
 			if !hasVersion {
@@ -54,7 +59,7 @@ func matcherFunc(r Route, defaultHandler http.HandlerFunc) func(r *http.Request,
 			}
 			if handler, ok := r.RouteHandlers[RouteHandlerVersion(version)]; ok {
 				// found handler for specified version
-				rm.Handler = handler
+				rm.Handler = ctx.Inject(handler)
 				break
 			}
 		}

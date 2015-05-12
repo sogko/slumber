@@ -1,23 +1,21 @@
 package main
 
 import (
+	"github.com/sogko/golang-rest-api-server-example/controllers"
 	"github.com/sogko/golang-rest-api-server-example/server"
-	"github.com/sogko/golang-rest-api-server-example/sessions"
-	"github.com/sogko/golang-rest-api-server-example/users"
 )
 
 // GetRoutes Wire API routes to controllers (http.HandlerFunc)
 func GetRoutes() *server.Routes {
 
 	return &server.Routes{
-		//------------- API /users ---------//
 		server.Route{
 			Name:           "ListUsers",
 			Method:         "GET",
 			Pattern:        "/api/users",
 			DefaultVersion: "0.0",
 			RouteHandlers: server.RouteHandlers{
-				"0.0": users.HandleList_v0,
+				"0.0": controllers.HandleListUsers_v0,
 			},
 		},
 		server.Route{
@@ -26,7 +24,7 @@ func GetRoutes() *server.Routes {
 			Pattern:        "/api/users",
 			DefaultVersion: "0.0",
 			RouteHandlers: server.RouteHandlers{
-				"0.0": users.HandleCreate_v0,
+				"0.0": controllers.HandleCreateUser_v0,
 			},
 		},
 		server.Route{
@@ -35,7 +33,7 @@ func GetRoutes() *server.Routes {
 			Pattern:        "/api/users",
 			DefaultVersion: "0.0",
 			RouteHandlers: server.RouteHandlers{
-				"0.0": users.HandleUpdateList_v0,
+				"0.0": controllers.HandleUpdateUsers_v0,
 			},
 		},
 		server.Route{
@@ -44,7 +42,7 @@ func GetRoutes() *server.Routes {
 			Pattern:        "/api/users",
 			DefaultVersion: "0.0",
 			RouteHandlers: server.RouteHandlers{
-				"0.0": users.HandleDeleteAll_v0,
+				"0.0": controllers.HandleDeleteAllUsers_v0,
 			},
 		},
 		server.Route{
@@ -53,7 +51,7 @@ func GetRoutes() *server.Routes {
 			Pattern:        "/api/users/{id}",
 			DefaultVersion: "0.0",
 			RouteHandlers: server.RouteHandlers{
-				"0.0": users.HandleGet_v0,
+				"0.0": controllers.HandleGetUser_v0,
 			},
 		},
 		/*
@@ -67,7 +65,7 @@ func GetRoutes() *server.Routes {
 			Pattern:        "/api/users/{id}/confirm",
 			DefaultVersion: "0.0",
 			RouteHandlers: server.RouteHandlers{
-				"0.0": users.HandleConfirmUser_v0,
+				"0.0": controllers.HandleConfirmUser_v0,
 			},
 		},
 		server.Route{
@@ -76,7 +74,7 @@ func GetRoutes() *server.Routes {
 			Pattern:        "/api/users/{id}",
 			DefaultVersion: "0.0",
 			RouteHandlers: server.RouteHandlers{
-				"0.0": users.HandleUpdate_v0,
+				"0.0": controllers.HandleUpdateUser_v0,
 			},
 		},
 		server.Route{
@@ -85,17 +83,26 @@ func GetRoutes() *server.Routes {
 			Pattern:        "/api/users/{id}",
 			DefaultVersion: "0.0",
 			RouteHandlers: server.RouteHandlers{
-				"0.0": users.HandleDelete_v0,
+				"0.0": controllers.HandleDeleteUser_v0,
 			},
 		},
-		//------------- API /users ---------//
+		//------------- API /sessions ---------//
 		server.Route{
 			Name:           "CreateSession",
 			Method:         "POST",
 			Pattern:        "/api/sessions",
 			DefaultVersion: "0.0",
 			RouteHandlers: server.RouteHandlers{
-				"0.0": sessions.HandleCreate_v0,
+				"0.0": controllers.HandleCreateSession_v0,
+			},
+		},
+		server.Route{
+			Name:           "DeleteSession",
+			Method:         "DELETE",
+			Pattern:        "/api/sessions",
+			DefaultVersion: "0.0",
+			RouteHandlers: server.RouteHandlers{
+				"0.0": controllers.HandleDeleteSession_v0,
 			},
 		},
 	}

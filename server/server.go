@@ -3,6 +3,8 @@ package server
 import (
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/context"
+	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/golang-rest-api-server-example/middlewares"
 )
 
 // Request JSON body limit is set at 5MB (currently not enforced)
@@ -15,9 +17,10 @@ type Server struct {
 
 // Config type
 type Config struct {
-	Database *DatabaseOptions
-	Renderer *RendererOptions
-	Routes   *Routes
+	Database       domain.IDatabaseOptions
+	Renderer       domain.IRendererOptions
+	Routes         *Routes
+	TokenAuthority domain.ITokenAuthorityOptions
 }
 
 // NewServer Returns a new Server object
@@ -27,15 +30,29 @@ func NewServer(options *Config) *Server {
 	router := NewRouter(options.Routes)
 
 	// set up db session
-	session := NewSession(*options.Database)
+	db := middlewares.MongoDB{}
+	dbSession := db.NewSession(options.Database)
 
 	// set up renderer
-	renderer := NewRenderer(*options.Renderer)
+	r := middlewares.Renderer{}
+	renderer := r.NewRenderer(options.Renderer)
+
+	// set up TokenAuthority
+	ta := middlewares.TokenAuthority{}
+	ta.SetOptions(options.TokenAuthority)
+
+	// set up Authenticator
+	auth := middlewares.Authenticator{}
+
+	// set up request context
+	ctx := middlewares.Context{}
 
 	// set up server and middlewares
 	n := negroni.Classic()
-	n.Use(negroni.HandlerFunc(session.HandlerWithNext))
-	n.Use(negroni.HandlerFunc(renderer.HandlerWithNext))
+	n.Use(negroni.HandlerFunc(ctx.InjectWithNext(dbSession.Handler)))
+	n.Use(negroni.HandlerFunc(ctx.InjectWithNext(renderer.Handler)))
+	n.Use(negroni.HandlerFunc(ctx.InjectWithNext(ta.Handler)))
+	n.Use(negroni.HandlerFunc(ctx.InjectWithNext(auth.Handler)))
 
 	// add router and clear mux.context values at the end of request life-times
 	n.UseHandler(context.ClearHandler(router))

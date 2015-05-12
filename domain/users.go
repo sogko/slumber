@@ -1,4 +1,4 @@
-package users
+package domain
 
 import (
 	"github.com/twinj/uuid"
@@ -17,11 +17,14 @@ const (
 	StatusDeleted   = "deleted"
 )
 
-// User role names
-const (
-	RoleAdmin = "admin"
-	RoleUser  = "user"
-)
+type IUser interface {
+}
+
+type NewUser struct {
+	Username string `json:"username,omitempty"`
+	Email    string `json:"email,omitempty"`
+	Password string `json:"password,omitempty"`
+}
 
 // User model struct
 // User refers to the REST API user.
@@ -36,21 +39,19 @@ type User struct {
 
 	// fields are not exported to JSON
 	ConfirmationCode string `json:"-" bson:"confirmationCode"`
-	HashedPassword   string `json:"-" bson:"hashedPassword"` // TODO: implement user password
+	HashedPassword   string `json:"-" bson:"hashedPassword"`
 }
 
 // Users struct
 type Users []User
-
-type RoleName string
-type Roles []RoleName
 
 // IsValid Ensures that the customer object is valid
 func (user *User) IsValid() bool {
 	// Note regarding email address validation,
 	// as long as it `*looks* like an address, we'll allow it.
 	// User need to confirm account by click on link sent to the email anyways
-	return len(user.Email) > 0 &&
+	return len(user.Username) > 0 &&
+		len(user.Email) > 0 &&
 		strings.Contains(user.Email, "@")
 }
 
