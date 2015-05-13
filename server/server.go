@@ -19,33 +19,36 @@ type Server struct {
 type Config struct {
 	Database       domain.IDatabaseOptions
 	Renderer       domain.IRendererOptions
-	Routes         *Routes
+	Routes         *domain.Routes
 	TokenAuthority domain.ITokenAuthorityOptions
+	ACLMap         *domain.ACLMap
 }
 
 // NewServer Returns a new Server object
 func NewServer(options *Config) *Server {
 
+	// set up request context
+	ctx := middlewares.NewContext()
+
+	// set up AccessController
+	ac := middlewares.NewAccessController()
+	ac.Add(options.ACLMap)
+
 	// set up router
-	router := NewRouter(options.Routes)
+	router := NewRouter(options.Routes, ctx, ac)
 
 	// set up db session
-	db := middlewares.MongoDB{}
-	dbSession := db.NewSession(options.Database)
+	db := middlewares.NewMongoDB(options.Database)
+	dbSession := db.NewSession()
 
 	// set up renderer
-	r := middlewares.Renderer{}
-	renderer := r.NewRenderer(options.Renderer)
+	renderer := middlewares.NewRenderer(options.Renderer)
 
 	// set up TokenAuthority
-	ta := middlewares.TokenAuthority{}
-	ta.SetOptions(options.TokenAuthority)
+	ta := middlewares.NewTokenAuthority(options.TokenAuthority)
 
 	// set up Authenticator
-	auth := middlewares.Authenticator{}
-
-	// set up request context
-	ctx := middlewares.Context{}
+	auth := middlewares.NewAuthenticator()
 
 	// set up server and middlewares
 	n := negroni.Classic()

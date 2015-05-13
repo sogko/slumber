@@ -9,11 +9,18 @@ import (
 type contextKey string
 
 const (
+	RouteKey          contextKey = "RouteKey"
 	DbKey             contextKey = "DbKey"
 	RendererKey       contextKey = "RendererKey"
 	TokenClaimsKey    contextKey = "TokenClaimsKey"
 	TokenAuthorityKey contextKey = "TokenAuthorityKey"
+	CurrentUserKey    contextKey = "CurrentUserKey"
+	CurrentObjectKey  contextKey = "CurrentObjectKey"
 )
+
+func NewContext() *Context {
+	return &Context{}
+}
 
 // implements domain.IContext
 type Context struct {
@@ -29,6 +36,20 @@ func (ctx *Context) Inject(handler func(rw http.ResponseWriter, r *http.Request,
 	return func(rw http.ResponseWriter, r *http.Request) {
 		handler(rw, r, ctx)
 	}
+}
+
+// SetRouteCtx Sets the Database reference for the given request context
+func (ctx *Context) SetRouteCtx(r *http.Request, val *domain.Route) *domain.Route {
+	context.Set(r, RouteKey, val)
+	return val
+}
+
+// GetRouteCtx Returns the Database reference for the given request context
+func (ctx *Context) GetRouteCtx(r *http.Request) *domain.Route {
+	if r := context.Get(r, RouteKey); r != nil {
+		return r.(*domain.Route)
+	}
+	return &domain.Route{}
 }
 
 // SetDbCtx Sets the Database reference for the given request context
@@ -65,7 +86,7 @@ func (ctx *Context) SetAuthenticatedClaimsCtx(r *http.Request, val *domain.Token
 	return val
 }
 
-// SetAuthenticatedClaimsCtx the TokenClaims reference for the given request context
+// GetAuthenticatedClaimsCtx the TokenClaims reference for the given request context
 func (ctx *Context) GetAuthenticatedClaimsCtx(r *http.Request) *domain.TokenClaims {
 	if r := context.Get(r, TokenClaimsKey); r != nil {
 		return r.(*domain.TokenClaims)
@@ -83,6 +104,34 @@ func (ctx *Context) SetTokenAuthorityCtx(r *http.Request, val domain.ITokenAutho
 func (ctx *Context) GetTokenAuthorityCtx(r *http.Request) domain.ITokenAuthority {
 	if r := context.Get(r, TokenAuthorityKey); r != nil {
 		return r.(domain.ITokenAuthority)
+	}
+	return nil
+}
+
+// SetCurrentUserCtx Set the TokenAuthority reference for the given request context
+func (ctx *Context) SetCurrentUserCtx(r *http.Request, val *domain.User) *domain.User {
+	context.Set(r, CurrentUserKey, val)
+	return val
+}
+
+// GetCurrentUserCtx the TokenAuthority reference for the given request context
+func (ctx *Context) GetCurrentUserCtx(r *http.Request) *domain.User {
+	if r := context.Get(r, CurrentUserKey); r != nil {
+		return r.(*domain.User)
+	}
+	return nil
+}
+
+// SetCurrentObjectCtx Set the TokenAuthority reference for the given request context
+func (ctx *Context) SetCurrentObjectCtx(r *http.Request, val interface{}) interface{} {
+	context.Set(r, CurrentObjectKey, val)
+	return val
+}
+
+// GetCurrentObjectCtx the TokenAuthority reference for the given request context
+func (ctx *Context) GetCurrentObjectCtx(r *http.Request) interface{} {
+	if r := context.Get(r, CurrentObjectKey); r != nil {
+		return r
 	}
 	return nil
 }

@@ -15,7 +15,7 @@ type Renderer struct {
 }
 
 // NewRenderer Returns a new Renderer object
-func (renderer *Renderer) NewRenderer(options domain.IRendererOptions) domain.IRenderer {
+func NewRenderer(options domain.IRendererOptions) domain.IRenderer {
 	r := render.New(render.Options(*options.(*RendererOptions)))
 	return &Renderer{r}
 }

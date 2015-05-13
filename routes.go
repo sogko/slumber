@@ -1,109 +1,120 @@
 package main
 
 import (
+	"github.com/sogko/golang-rest-api-server-example/acl"
 	"github.com/sogko/golang-rest-api-server-example/controllers"
-	"github.com/sogko/golang-rest-api-server-example/server"
+	"github.com/sogko/golang-rest-api-server-example/domain"
 )
 
 // GetRoutes Wire API routes to controllers (http.HandlerFunc)
-func GetRoutes() *server.Routes {
+func GetRoutes() *domain.Routes {
 
-	return &server.Routes{
-		server.Route{
+	return &domain.Routes{
+		domain.Route{
 			Name:           "ListUsers",
 			Method:         "GET",
 			Pattern:        "/api/users",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleListUsers_v0,
 			},
+			ACLAction: acl.ListUsers,
 		},
-		server.Route{
+		domain.Route{
 			Name:           "CreateUser",
 			Method:         "POST",
 			Pattern:        "/api/users",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleCreateUser_v0,
 			},
+			ACLAction: acl.CreateUser,
 		},
-		server.Route{
+		domain.Route{
 			Name:           "UpdateUsers",
 			Method:         "PUT",
 			Pattern:        "/api/users",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleUpdateUsers_v0,
 			},
+			ACLAction: acl.UpdateUsers,
 		},
-		server.Route{
+		domain.Route{
 			Name:           "DeleteAllUsers",
 			Method:         "DELETE",
 			Pattern:        "/api/users",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleDeleteAllUsers_v0,
 			},
+			ACLAction: acl.DeleteAllUsers,
 		},
-		server.Route{
+		domain.Route{
 			Name:           "GetUser",
 			Method:         "GET",
 			Pattern:        "/api/users/{id}",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleGetUser_v0,
 			},
+			ACLAction: acl.GetUser,
 		},
 		/*
 			Method for email confirmation has to be GET because
 			link to confirm email has to be click-able from email content
 			(You can't add a POST/PUT body)
 		*/
-		server.Route{
+		domain.Route{
 			Name:           "ConfirmUser",
 			Method:         "GET",
 			Pattern:        "/api/users/{id}/confirm",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleConfirmUser_v0,
 			},
+			ACLAction: acl.ConfirmUser,
 		},
-		server.Route{
+		domain.Route{
 			Name:           "UpdateUser",
 			Method:         "PUT",
 			Pattern:        "/api/users/{id}",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleUpdateUser_v0,
 			},
+			ACLAction: acl.UpdateUser,
 		},
-		server.Route{
+		domain.Route{
 			Name:           "DeleteUser",
 			Method:         "DELETE",
 			Pattern:        "/api/users/{id}",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleDeleteUser_v0,
 			},
+			ACLAction: acl.DeleteUser,
 		},
 		//------------- API /sessions ---------//
-		server.Route{
+		domain.Route{
 			Name:           "CreateSession",
 			Method:         "POST",
 			Pattern:        "/api/sessions",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleCreateSession_v0,
 			},
+			ACLAction: acl.CreateSession,
 		},
-		server.Route{
+		domain.Route{
 			Name:           "DeleteSession",
 			Method:         "DELETE",
 			Pattern:        "/api/sessions",
 			DefaultVersion: "0.0",
-			RouteHandlers: server.RouteHandlers{
+			RouteHandlers: domain.RouteHandlers{
 				"0.0": controllers.HandleDeleteSession_v0,
 			},
+			ACLAction: acl.DeleteSession,
 		},
 	}
 }

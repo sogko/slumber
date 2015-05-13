@@ -73,7 +73,7 @@ func HandleDeleteSession_v0(w http.ResponseWriter, req *http.Request, ctx domain
 	r := ctx.GetRendererCtx(req)
 	claims := ctx.GetAuthenticatedClaimsCtx(req)
 
-	log.Println(claims)
+	log.Println("Claim", claims)
 	var body CreateSessionRequest_v0
 	err := DecodeJSONBodyHelper(w, req, r, &body)
 	if err != nil {

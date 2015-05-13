@@ -13,9 +13,16 @@ type MongoDBOptions struct {
 	DialTimeout  time.Duration
 }
 
+func NewMongoDB(options domain.IDatabaseOptions) *MongoDB {
+	db := &MongoDB{}
+	db.options = options
+	return db
+}
+
 // MongoDatabase implements Database interface
 type MongoDB struct {
 	currentDb *mgo.Database
+	options   domain.IDatabaseOptions
 }
 
 // CreateSession Returns a new database session
@@ -24,9 +31,9 @@ type MongoDB struct {
 // - DatabaseName = ""
 // - DialTimeout  = 60 seconds
 //
-func (db *MongoDB) NewSession(options domain.IDatabaseOptions) domain.IDatabaseSession {
+func (db *MongoDB) NewSession() domain.IDatabaseSession {
 
-	var mongoOptions = options.(*MongoDBOptions)
+	var mongoOptions = db.options.(*MongoDBOptions)
 
 	// set default DialTimeout value
 	if mongoOptions.DialTimeout <= 0 {
@@ -82,7 +89,9 @@ func (session *MongoDBSession) Handler(w http.ResponseWriter, req *http.Request,
 	// clone the `global` mgo session and save the named database in the request context for thread-safety
 	s := session.Clone()
 	defer s.Close()
-	db := &MongoDB{s.DB(session.DatabaseName)}
+	db := &MongoDB{
+		currentDb: s.DB(session.DatabaseName),
+	}
 	ctx.SetDbCtx(req, db)
 	next(w, req)
 }

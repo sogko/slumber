@@ -18,6 +18,12 @@ func generateJTI() string {
 	return bson.NewObjectId().Hex()
 }
 
+func NewTokenAuthority(options domain.ITokenAuthorityOptions) *TokenAuthority {
+	ta := TokenAuthority{}
+	ta.Options = *options.(*TokenAuthorityOptions)
+	return &ta
+}
+
 type TokenAuthority struct {
 	Options TokenAuthorityOptions
 }
@@ -27,10 +33,6 @@ type TokenAuthorityOptions struct {
 	PublicSigningKey  []byte
 }
 
-func (ta *TokenAuthority) SetOptions(options domain.ITokenAuthorityOptions) {
-	ta.Options = *options.(*TokenAuthorityOptions)
-
-}
 func (ta *TokenAuthority) CreateNewSessionToken(claims *domain.TokenClaims) (string, error) {
 
 	token := jwt.New(jwt.SigningMethodRS512)
@@ -61,14 +63,28 @@ func (ta *TokenAuthority) VerifyTokenString(tokenStr string) (domain.Token, *dom
 
 	var claims domain.TokenClaims
 	if token.Valid {
-		claims.UserID = token.Claims["user_id"].(string)
-		claims.Status = token.Claims["status"].(string)
-		for _, role := range token.Claims["roles"].([]interface{}) {
-			claims.Roles = append(claims.Roles, role.(string))
+		if token.Claims["user_id"] != nil {
+			claims.UserID = token.Claims["user_id"].(string)
 		}
-		claims.JTI = token.Claims["jti"].(string)
-		claims.IssuedAt, _ = time.Parse(time.RFC3339, token.Claims["iat"].(string))
-		claims.ExpireAt, _ = time.Parse(time.RFC3339, token.Claims["exp"].(string))
+		if token.Claims["status"] != nil {
+			claims.Status = token.Claims["status"].(string)
+		}
+		if token.Claims["roles"] != nil {
+			for _, role := range token.Claims["roles"].([]interface{}) {
+				if role != nil {
+					claims.Roles = append(claims.Roles, role.(string))
+				}
+			}
+		}
+		if token.Claims["jti"] != nil {
+			claims.JTI = token.Claims["jti"].(string)
+		}
+		if token.Claims["iat"] != nil {
+			claims.IssuedAt, _ = time.Parse(time.RFC3339, token.Claims["iat"].(string))
+		}
+		if token.Claims["exp"] != nil {
+			claims.ExpireAt, _ = time.Parse(time.RFC3339, token.Claims["exp"].(string))
+		}
 	}
 
 	return domain.Token(*token), &claims, err

@@ -3,15 +3,17 @@ package server_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/sogko/golang-rest-api-server-example/server"
-	"github.com/sogko/golang-rest-api-server-example/utils"
+	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/golang-rest-api-server-example/libs"
+	"github.com/sogko/golang-rest-api-server-example/middlewares"
+	"github.com/sogko/golang-rest-api-server-example/server"
 	"net/http"
 	"net/http/httptest"
 )
 
-func handleStub(version string) http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		r := RendererCtx(req)
+func handleStub(version string) domain.ContextHandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {
+		r := ctx.GetRendererCtx(req)
 		r.JSON(w, http.StatusOK, map[string]interface{}{
 			"version": version,
 		})
@@ -19,26 +21,26 @@ func handleStub(version string) http.HandlerFunc {
 }
 
 var _ = Describe("Router", func() {
-	var server *Server
-	var route Route
+	var s *server.Server
+	var route server.Route
 	var request *http.Request
 	var recorder *httptest.ResponseRecorder
 	var bodyJSON map[string]interface{}
 
-	var dbOptions DatabaseOptions = DatabaseOptions{
+	var dbOptions = middlewares.MongoDBOptions{
 		ServerName:   TestDatabaseServerName,
 		DatabaseName: TestDatabaseName,
 	}
 
-	var renderOptions RendererOptions = RendererOptions{}
+	var renderOptions = middlewares.RendererOptions{}
 
 	// define test route
-	route = Route{
+	route = server.Route{
 		Name:           "Test",
 		Method:         "GET",
 		Pattern:        "/api/test",
 		DefaultVersion: "0.2",
-		RouteHandlers: RouteHandlers{
+		RouteHandlers: server.RouteHandlers{
 			"0.1": handleStub("0.1"),
 			"0.2": handleStub("0.2"),
 			"0.3": handleStub("0.3"),
@@ -48,11 +50,12 @@ var _ = Describe("Router", func() {
 	Describe("Test API versioning", func() {
 
 		BeforeEach(func() {
-			routes := &Routes{route}
-			server = NewServer(&Config{
-				Database: &dbOptions,
-				Renderer: &renderOptions,
-				Routes:   routes,
+			routes := &server.Routes{route}
+			s = server.NewServer(&server.Config{
+				Database:       &dbOptions,
+				Renderer:       &renderOptions,
+				Routes:         routes,
+				TokenAuthority: &middlewares.TokenAuthorityOptions{},
 			})
 
 			// record HTTP responses
@@ -64,8 +67,8 @@ var _ = Describe("Router", func() {
 			It("should use default API version", func() {
 
 				request, _ = http.NewRequest("GET", "/api/test", nil)
-				server.ServeHTTP(recorder, request)
-				bodyJSON = utils.MapFromJSON(recorder.Body.Bytes())
+				s.ServeHTTP(recorder, request)
+				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})
@@ -78,8 +81,8 @@ var _ = Describe("Router", func() {
 
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "application/json;version=0.1")
-				server.ServeHTTP(recorder, request)
-				bodyJSON = utils.MapFromJSON(recorder.Body.Bytes())
+				s.ServeHTTP(recorder, request)
+				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string("0.1")))
 			})
@@ -91,8 +94,8 @@ var _ = Describe("Router", func() {
 
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "application/vnd.api+json;version=0.10")
-				server.ServeHTTP(recorder, request)
-				bodyJSON = utils.MapFromJSON(recorder.Body.Bytes())
+				s.ServeHTTP(recorder, request)
+				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})
@@ -104,8 +107,8 @@ var _ = Describe("Router", func() {
 
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "application/json;version=0.10")
-				server.ServeHTTP(recorder, request)
-				bodyJSON = utils.MapFromJSON(recorder.Body.Bytes())
+				s.ServeHTTP(recorder, request)
+				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})
@@ -117,8 +120,8 @@ var _ = Describe("Router", func() {
 
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "application/json")
-				server.ServeHTTP(recorder, request)
-				bodyJSON = utils.MapFromJSON(recorder.Body.Bytes())
+				s.ServeHTTP(recorder, request)
+				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})
@@ -130,8 +133,8 @@ var _ = Describe("Router", func() {
 
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "")
-				server.ServeHTTP(recorder, request)
-				bodyJSON = utils.MapFromJSON(recorder.Body.Bytes())
+				s.ServeHTTP(recorder, request)
+				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})
@@ -142,7 +145,7 @@ var _ = Describe("Router", func() {
 
 		It("should panic", func() {
 			Expect(func() {
-				server = NewServer(&Config{
+				s = server.NewServer(&server.Config{
 					Database: &dbOptions,
 					Renderer: &renderOptions,
 				})
@@ -155,12 +158,12 @@ var _ = Describe("Router", func() {
 
 		It("should panic", func() {
 			Expect(func() {
-				routes := &Routes{
-					Route{"Test", "GET", "/api/test", "missingDefaultVersion", RouteHandlers{
+				routes := &server.Routes{
+					server.Route{"Test", "GET", "/api/test", "missingDefaultVersion", server.RouteHandlers{
 						"0.1": handleStub("0.1"),
 					}},
 				}
-				server = NewServer(&Config{
+				s = server.NewServer(&server.Config{
 					Database: &dbOptions,
 					Renderer: &renderOptions,
 					Routes:   routes,

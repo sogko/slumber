@@ -5,31 +5,31 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/sogko/golang-rest-api-server-example/domain"
-	"github.com/sogko/golang-rest-api-server-example/middlewares"
-	"github.com/sogko/golang-rest-api-server-example/utils"
+	"github.com/sogko/golang-rest-api-server-example/libs"
 	"net/http"
 )
 
-// RouteHandlerVersion type
-type RouteHandlerVersion string
-
-// RouteHandlers is a map of route version to its handler
-type RouteHandlers map[RouteHandlerVersion]domain.ContextHandlerFunc
-
-// Route type
-// Note that DefaultVersion must exists in RouteHandlers map
-// See routes.go for examples
-type Route struct {
-	Name                 string
-	Method               string
-	Pattern              string
-	DefaultVersion       RouteHandlerVersion
-	RouteHandlers        RouteHandlers
-	AccessControlHandler RouteHandlers
-}
-
-// Routes type
-type Routes []Route
+//
+//// RouteHandlerVersion type
+//type RouteHandlerVersion string
+//
+//// RouteHandlers is a map of route version to its handler
+//type RouteHandlers map[RouteHandlerVersion]domain.ContextHandlerFunc
+//
+//// Route type
+//// Note that DefaultVersion must exists in RouteHandlers map
+//// See routes.go for examples
+//type Route struct {
+//	Name                 string
+//	Method               string
+//	Pattern              string
+//	DefaultVersion       RouteHandlerVersion
+//	RouteHandlers        RouteHandlers
+//	ACLAction            string
+//}
+//
+//// Routes type
+//type Routes []Route
 
 // Router type
 type Router struct {
@@ -37,12 +37,11 @@ type Router struct {
 }
 
 // matcherFunc matches the handler to the correct API version based on its `accept` header
-func matcherFunc(r Route, defaultHandler domain.ContextHandlerFunc) func(r *http.Request, rm *mux.RouteMatch) bool {
-	ctx := middlewares.Context{}
+// TODO: refactor matcher function as config.Config
+func matcherFunc(r domain.Route, defaultHandler domain.ContextHandlerFunc, ctx domain.IContext, ac domain.IAccessController) func(r *http.Request, rm *mux.RouteMatch) bool {
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
-		acceptHeaders := utils.ParseAcceptHeaders(req.Header.Get("accept"))
-		rm.Handler = ctx.Inject(defaultHandler)
-
+		acceptHeaders := libs.ParseAcceptHeaders(req.Header.Get("accept"))
+		foundHandler := defaultHandler
 		// try to match a handler to the specified `version` params
 		// else we will fall back to the default handler
 		for _, h := range acceptHeaders {
@@ -57,18 +56,19 @@ func matcherFunc(r Route, defaultHandler domain.ContextHandlerFunc) func(r *http
 			if !hasVersion {
 				continue
 			}
-			if handler, ok := r.RouteHandlers[RouteHandlerVersion(version)]; ok {
+			if handler, ok := r.RouteHandlers[domain.RouteHandlerVersion(version)]; ok {
 				// found handler for specified version
-				rm.Handler = ctx.Inject(handler)
+				foundHandler = handler
 				break
 			}
 		}
+		rm.Handler = ctx.Inject(ac.Handler(r.ACLAction, foundHandler))
 		return true
 	}
 }
 
 // NewRouter Returns a new Router object
-func NewRouter(routes *Routes) *Router {
+func NewRouter(routes *domain.Routes, ctx domain.IContext, ac domain.IAccessController) *Router {
 	if routes == nil {
 		// server/router instantiation error
 		// its safe to throw panic here
@@ -92,7 +92,7 @@ func NewRouter(routes *Routes) *Router {
 			Methods(route.Method).
 			Path(route.Pattern).
 			Name(route.Name).
-			MatcherFunc(matcherFunc(route, defaultHandler))
+			MatcherFunc(matcherFunc(route, defaultHandler, ctx, ac))
 
 	}
 	return &Router{router}

@@ -107,8 +107,9 @@ $ openssl rsa -in demo.rsa -pubout > demo.rsa.pub
 ## TODO
 * [x] API versioning using Accept header, for e.g: `Accept=application/json;version=1.0,*/*`
 * [x] User and roles management
-* [ ] Session management using JWT tokens
-* [ ] Activity-based access control (ABAC)
+* [x] Session management using JWT tokens
+* [x] Activity-based access control (ABAC)
+* [-] Refactor using Dependency Inversion
 * [ ] Task scheduler
 * [ ] Load test using vegeta
 * [ ] i18n (internationalisation)

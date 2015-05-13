@@ -1,11 +1,12 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"github.com/sogko/golang-rest-api-server-example/acl"
 	"github.com/sogko/golang-rest-api-server-example/middlewares"
 	"github.com/sogko/golang-rest-api-server-example/server"
 	"io/ioutil"
-	"errors"
-	"fmt"
 )
 
 func main() {
@@ -23,6 +24,10 @@ func main() {
 	// load routes
 	routes := GetRoutes()
 
+	// load ACL map
+	aclMap := acl.UsersAPIACL
+	aclMap = middlewares.MergeACLMap(&aclMap, &acl.SessionsAPIACL)
+
 	// set server configuration
 	config := server.Config{
 		Database: &middlewares.MongoDBOptions{
@@ -37,6 +42,7 @@ func main() {
 			PrivateSigningKey: privateSigningKey,
 			PublicSigningKey:  publicSigningKey,
 		},
+		ACLMap: &aclMap,
 	}
 
 	// init server and run

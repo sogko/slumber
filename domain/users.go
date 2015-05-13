@@ -17,9 +17,6 @@ const (
 	StatusDeleted   = "deleted"
 )
 
-type IUser interface {
-}
-
 type NewUser struct {
 	Username string `json:"username,omitempty"`
 	Email    string `json:"email,omitempty"`
@@ -88,4 +85,13 @@ func generateNewUniqueCode() string {
 	// set code format
 	uuid.SwitchFormat(uuid.Clean)
 	return uuid.NewV4().String()
+}
+
+func (user *User) HasRole(r Role) bool {
+	for _, a := range user.Roles {
+		if a == r {
+			return true
+		}
+	}
+	return false
 }

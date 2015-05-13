@@ -1,5 +1,3 @@
-//TODO: add ACL to Users API
-// Only admin are able to access Users API
 package controllers
 
 import (
@@ -186,7 +184,7 @@ func HandleCreateUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.IC
 		return
 	}
 
-	// TODO: send email / message with eamil confirmation code
+	// TODO: send email / message with email confirmation code
 
 	r.JSON(w, http.StatusCreated, CreateUserResponse_v0{
 		User:    newUser,
@@ -211,22 +209,12 @@ func HandleConfirmUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.I
 	}
 
 	if user.Status != domain.StatusPending {
-		r.JSON(w, http.StatusBadRequest, ConfirmUserResponse_v0{
-			Code:    code,
-			User:    *user,
-			Message: "User not pending confirmation",
-			Success: false,
-		})
+		RenderErrorResponseHelper(w, req, r, "User not pending confirmation")
 		return
 	}
 
 	if !user.IsCodeVerified(code) {
-		r.JSON(w, http.StatusBadRequest, ConfirmUserResponse_v0{
-			Code:    code,
-			User:    *user,
-			Message: "Invalid code",
-			Success: false,
-		})
+		RenderErrorResponseHelper(w, req, r, "Invalid code")
 		return
 	}
 

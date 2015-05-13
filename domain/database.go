@@ -13,7 +13,7 @@ type Change mgo.Change
 
 // Database interface
 type IDatabase interface {
-	NewSession(IDatabaseOptions) IDatabaseSession
+	NewSession() IDatabaseSession
 
 	Insert(name string, obj interface{}) error
 	Update(name string, query Query, change Change, result interface{}) error
