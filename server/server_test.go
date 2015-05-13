@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("Server", func() {
 	var s *server.Server
-	var routes *server.Routes
+	var routes *domain.Routes
 
 	BeforeEach(func() {
 	})
@@ -21,8 +21,8 @@ var _ = Describe("Server", func() {
 
 	Describe("Default server config", func() {
 
-		routes = &server.Routes{
-			server.Route{"Test", "GET", "/api/test", "0.1", server.RouteHandlers{
+		routes = &domain.Routes{
+			domain.Route{"Test", "GET", "/api/test", "0.1", domain.RouteHandlers{
 				"0.1": func(rw http.ResponseWriter, req *http.Request, ctx domain.IContext) {
 					r := ctx.GetRendererCtx(req)
 					r.JSON(rw, http.StatusOK, map[string]string{
@@ -46,12 +46,12 @@ var _ = Describe("Server", func() {
 		It("should panic", func(done Done) {
 			Expect(func() {
 
-				db := middlewares.MongoDB{}
-				db.NewSession(middlewares.MongoDBOptions{
+				db := middlewares.NewMongoDB(&middlewares.MongoDBOptions{
 					ServerName:   "BadServerName",
 					DatabaseName: "BadDBName",
 					DialTimeout:  1,
 				})
+				db.NewSession()
 			}).Should(Panic())
 			close(done)
 		}, 15)

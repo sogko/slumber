@@ -21,5 +21,5 @@ type IContext interface {
 	GetCurrentObjectCtx(r *http.Request) interface{}
 
 	InjectWithNext(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc, ctx IContext)) func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc)
-	Inject(func(rw http.ResponseWriter, r *http.Request, ctx IContext)) http.HandlerFunc
+	Inject(handler ContextHandlerFunc) http.HandlerFunc
 }

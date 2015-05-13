@@ -15,7 +15,6 @@ type Route struct {
 	Pattern        string
 	DefaultVersion RouteHandlerVersion
 	RouteHandlers  RouteHandlers
-	ACLAction      string
 }
 
 // Routes type

@@ -22,7 +22,8 @@ func handleStub(version string) domain.ContextHandlerFunc {
 
 var _ = Describe("Router", func() {
 	var s *server.Server
-	var route server.Route
+	var route domain.Route
+	var aclMap domain.ACLMap
 	var request *http.Request
 	var recorder *httptest.ResponseRecorder
 	var bodyJSON map[string]interface{}
@@ -35,27 +36,34 @@ var _ = Describe("Router", func() {
 	var renderOptions = middlewares.RendererOptions{}
 
 	// define test route
-	route = server.Route{
+	route = domain.Route{
 		Name:           "Test",
 		Method:         "GET",
 		Pattern:        "/api/test",
 		DefaultVersion: "0.2",
-		RouteHandlers: server.RouteHandlers{
+		RouteHandlers: domain.RouteHandlers{
 			"0.1": handleStub("0.1"),
 			"0.2": handleStub("0.2"),
 			"0.3": handleStub("0.3"),
 		},
 	}
 
+	aclMap = domain.ACLMap{
+		"Test": func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+			return (true)
+		},
+	}
+
 	Describe("Test API versioning", func() {
 
 		BeforeEach(func() {
-			routes := &server.Routes{route}
+			routes := &domain.Routes{route}
 			s = server.NewServer(&server.Config{
 				Database:       &dbOptions,
 				Renderer:       &renderOptions,
 				Routes:         routes,
 				TokenAuthority: &middlewares.TokenAuthorityOptions{},
+				ACLMap:         &aclMap,
 			})
 
 			// record HTTP responses
@@ -158,8 +166,8 @@ var _ = Describe("Router", func() {
 
 		It("should panic", func() {
 			Expect(func() {
-				routes := &server.Routes{
-					server.Route{"Test", "GET", "/api/test", "missingDefaultVersion", server.RouteHandlers{
+				routes := &domain.Routes{
+					domain.Route{"Test", "GET", "/api/test", "missingDefaultVersion", domain.RouteHandlers{
 						"0.1": handleStub("0.1"),
 					}},
 				}

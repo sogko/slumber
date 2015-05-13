@@ -1,4 +1,4 @@
-package acl
+package users
 
 import (
 	"github.com/gorilla/mux"
@@ -7,16 +7,6 @@ import (
 	"net/http"
 )
 
-const (
-	ListUsers      = "ListUsers"
-	GetUser        = "GetUser"
-	CreateUser     = "CreateUser"
-	UpdateUsers    = "UpdateUsers"
-	DeleteAllUsers = "DeleteAllUsers"
-	ConfirmUser    = "ConfirmUser"
-	UpdateUser     = "UpdateUser"
-	DeleteUser     = "DeleteUser"
-)
 
 var UsersAPIACL = domain.ACLMap{
 	ListUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {

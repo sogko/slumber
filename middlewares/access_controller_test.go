@@ -157,29 +157,4 @@ var _ = Describe("AccessController", func() {
 		})
 	})
 
-	Describe("MergeACLMap()", func() {
-		stub := func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-			return true
-		}
-		firstMap := domain.ACLMap{
-			"first": stub,
-		}
-		secondMap := domain.ACLMap{
-			"second": stub,
-		}
-		var result domain.ACLMap
-		BeforeEach(func() {
-			result = middlewares.MergeACLMap(&firstMap, &secondMap)
-		})
-		It("should return a new map", func() {
-			Expect(result["first"]).ToNot(BeNil())
-		})
-		It("should return a new map", func() {
-			Expect(result["second"]).ToNot(BeNil())
-		})
-		It("should return a new map", func() {
-			Expect(result["third"]).To(BeNil())
-		})
-	})
-
 })

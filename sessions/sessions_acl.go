@@ -1,13 +1,8 @@
-package acl
+package sessions
 
 import (
 	"github.com/sogko/golang-rest-api-server-example/domain"
 	"net/http"
-)
-
-const (
-	CreateSession = "CreateSession"
-	DeleteSession = "DeleteSession"
 )
 
 var SessionsAPIACL = domain.ACLMap{

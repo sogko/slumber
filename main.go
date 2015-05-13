@@ -3,9 +3,11 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/sogko/golang-rest-api-server-example/acl"
 	"github.com/sogko/golang-rest-api-server-example/middlewares"
 	"github.com/sogko/golang-rest-api-server-example/server"
+	"github.com/sogko/golang-rest-api-server-example/sessions"
+	"github.com/sogko/golang-rest-api-server-example/libs"
+	"github.com/sogko/golang-rest-api-server-example/users"
 	"io/ioutil"
 )
 
@@ -22,11 +24,12 @@ func main() {
 	}
 
 	// load routes
-	routes := GetRoutes()
+	routes := users.UsersAPIRoutes
+	routes = libs.MergeRoutes(&routes, &sessions.SessionsAPIRoutes)
 
 	// load ACL map
-	aclMap := acl.UsersAPIACL
-	aclMap = middlewares.MergeACLMap(&aclMap, &acl.SessionsAPIACL)
+	aclMap := users.UsersAPIACL
+	aclMap = libs.MergeACLMap(&aclMap, &sessions.SessionsAPIACL)
 
 	// set server configuration
 	config := server.Config{
@@ -37,7 +40,7 @@ func main() {
 		Renderer: &middlewares.RendererOptions{
 			IndentJSON: true,
 		},
-		Routes: routes,
+		Routes: &routes,
 		TokenAuthority: &middlewares.TokenAuthorityOptions{
 			PrivateSigningKey: privateSigningKey,
 			PublicSigningKey:  publicSigningKey,

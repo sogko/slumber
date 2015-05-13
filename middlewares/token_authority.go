@@ -20,7 +20,9 @@ func generateJTI() string {
 
 func NewTokenAuthority(options domain.ITokenAuthorityOptions) *TokenAuthority {
 	ta := TokenAuthority{}
-	ta.Options = *options.(*TokenAuthorityOptions)
+	if options != nil {
+		ta.Options = *options.(*TokenAuthorityOptions)
+	}
 	return &ta
 }
 

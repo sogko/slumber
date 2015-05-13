@@ -9,28 +9,6 @@ import (
 	"net/http"
 )
 
-//
-//// RouteHandlerVersion type
-//type RouteHandlerVersion string
-//
-//// RouteHandlers is a map of route version to its handler
-//type RouteHandlers map[RouteHandlerVersion]domain.ContextHandlerFunc
-//
-//// Route type
-//// Note that DefaultVersion must exists in RouteHandlers map
-//// See routes.go for examples
-//type Route struct {
-//	Name                 string
-//	Method               string
-//	Pattern              string
-//	DefaultVersion       RouteHandlerVersion
-//	RouteHandlers        RouteHandlers
-//	ACLAction            string
-//}
-//
-//// Routes type
-//type Routes []Route
-
 // Router type
 type Router struct {
 	*mux.Router
@@ -62,7 +40,8 @@ func matcherFunc(r domain.Route, defaultHandler domain.ContextHandlerFunc, ctx d
 				break
 			}
 		}
-		rm.Handler = ctx.Inject(ac.Handler(r.ACLAction, foundHandler))
+		// injects ctx IContext and add AccessController into routeHandler
+		rm.Handler = ctx.Inject(ac.Handler(r.Name, foundHandler))
 		return true
 	}
 }

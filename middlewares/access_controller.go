@@ -3,6 +3,7 @@ package middlewares
 import (
 	"github.com/sogko/golang-rest-api-server-example/controllers"
 	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/golang-rest-api-server-example/libs"
 	"net/http"
 )
 
@@ -10,18 +11,6 @@ func NewAccessController() *AccessController {
 	ac := AccessController{}
 	ac.ACLMap = domain.ACLMap{}
 	return &ac
-}
-
-// MergeACLMap Returns a new map
-func MergeACLMap(to *domain.ACLMap, from *domain.ACLMap) domain.ACLMap {
-	res := domain.ACLMap{}
-	for k, v := range *to {
-		res[k] = v
-	}
-	for k, v := range *from {
-		res[k] = v
-	}
-	return res
 }
 
 // implements IAccessController
@@ -37,7 +26,7 @@ func (ac *AccessController) SetRequestContext(req *http.Request, ctx domain.ICon
 }
 
 func (ac *AccessController) Add(_aclMap *domain.ACLMap) {
-	ac.ACLMap = MergeACLMap(&ac.ACLMap, _aclMap)
+	ac.ACLMap = libs.MergeACLMap(&ac.ACLMap, _aclMap)
 }
 
 func (ac *AccessController) HasAction(action string) bool {

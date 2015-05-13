@@ -32,9 +32,12 @@ func NewServer(options *Config) *Server {
 
 	// set up AccessController
 	ac := middlewares.NewAccessController()
-	ac.Add(options.ACLMap)
+	if options.ACLMap != nil {
+		ac.Add(options.ACLMap)
+	}
 
 	// set up router
+	// TODO: de-couple ctx and ac from router
 	router := NewRouter(options.Routes, ctx, ac)
 
 	// set up db session

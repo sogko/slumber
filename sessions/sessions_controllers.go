@@ -1,6 +1,7 @@
-package controllers
+package sessions
 
 import (
+	"github.com/sogko/golang-rest-api-server-example/controllers"
 	"github.com/sogko/golang-rest-api-server-example/domain"
 	"github.com/sogko/golang-rest-api-server-example/repositories"
 	"log"
@@ -23,25 +24,25 @@ func HandleCreateSession_v0(w http.ResponseWriter, req *http.Request, ctx domain
 	ta := ctx.GetTokenAuthorityCtx(req)
 
 	var body CreateSessionRequest_v0
-	err := DecodeJSONBodyHelper(w, req, r, &body)
+	err := controllers.DecodeJSONBodyHelper(w, req, r, &body)
 	if err != nil {
 		return
 	}
 
 	if body.Username == "" {
-		RenderErrorResponseHelper(w, req, r, "Empty username")
+		controllers.RenderErrorResponseHelper(w, req, r, "Empty username")
 		return
 	}
 
 	repo := repositories.UserRepository{db}
 	user, err := repo.GetUserByUsername(body.Username)
 	if err != nil {
-		RenderErrorResponseHelper(w, req, r, "Invalid username/password")
+		controllers.RenderErrorResponseHelper(w, req, r, "Invalid username/password")
 		return
 	}
 
 	if !user.IsCredentialsVerified(body.Password) {
-		RenderErrorResponseHelper(w, req, r, "Invalid username/password")
+		controllers.RenderErrorResponseHelper(w, req, r, "Invalid username/password")
 		return
 	}
 
@@ -58,7 +59,7 @@ func HandleCreateSession_v0(w http.ResponseWriter, req *http.Request, ctx domain
 
 	if err != nil {
 		log.Println("err", err.Error())
-		RenderErrorResponseHelper(w, req, r, "Error creating session token")
+		controllers.RenderErrorResponseHelper(w, req, r, "Error creating session token")
 		return
 	}
 
@@ -75,7 +76,7 @@ func HandleDeleteSession_v0(w http.ResponseWriter, req *http.Request, ctx domain
 
 	log.Println("Claim", claims)
 	var body CreateSessionRequest_v0
-	err := DecodeJSONBodyHelper(w, req, r, &body)
+	err := controllers.DecodeJSONBodyHelper(w, req, r, &body)
 	if err != nil {
 		return
 	}

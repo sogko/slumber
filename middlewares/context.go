@@ -32,7 +32,7 @@ func (ctx *Context) InjectWithNext(middleware func(rw http.ResponseWriter, r *ht
 	}
 }
 
-func (ctx *Context) Inject(handler func(rw http.ResponseWriter, r *http.Request, ctx domain.IContext)) http.HandlerFunc {
+func (ctx *Context) Inject(handler domain.ContextHandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		handler(rw, r, ctx)
 	}

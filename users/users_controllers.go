@@ -1,7 +1,8 @@
-package controllers
+package users
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/sogko/golang-rest-api-server-example/controllers"
 	"github.com/sogko/golang-rest-api-server-example/domain"
 	"github.com/sogko/golang-rest-api-server-example/repositories"
 	"net/http"
@@ -88,7 +89,7 @@ func HandleUpdateUsers_v0(w http.ResponseWriter, req *http.Request, ctx domain.I
 	db := ctx.GetDbCtx(req)
 
 	var body UpdateUsersRequest_v0
-	err := DecodeJSONBodyHelper(w, req, r, &body)
+	err := controllers.DecodeJSONBodyHelper(w, req, r, &body)
 	if err != nil {
 		return
 	}
@@ -142,18 +143,18 @@ func HandleCreateUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.IC
 	repo := repositories.UserRepository{db}
 
 	var body CreateUserRequest_v0
-	err := DecodeJSONBodyHelper(w, req, r, &body)
+	err := controllers.DecodeJSONBodyHelper(w, req, r, &body)
 	if err != nil {
 		return
 	}
 
 	if repo.UserExistsByUsername(body.User.Username) {
-		RenderErrorResponseHelper(w, req, r, "Username already exists")
+		controllers.RenderErrorResponseHelper(w, req, r, "Username already exists")
 		return
 	}
 
 	if repo.UserExistsByEmail(body.User.Email) {
-		RenderErrorResponseHelper(w, req, r, "User with email address already exists")
+		controllers.RenderErrorResponseHelper(w, req, r, "User with email address already exists")
 		return
 	}
 
@@ -174,13 +175,13 @@ func HandleCreateUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.IC
 
 	// ensure that user obj is valid
 	if !newUser.IsValid() {
-		RenderErrorResponseHelper(w, req, r, "Invalid user object")
+		controllers.RenderErrorResponseHelper(w, req, r, "Invalid user object")
 		return
 	}
 
 	err = repo.CreateUser(&newUser)
 	if err != nil {
-		RenderErrorResponseHelper(w, req, r, "Failed to save user object")
+		controllers.RenderErrorResponseHelper(w, req, r, "Failed to save user object")
 		return
 	}
 
@@ -204,17 +205,17 @@ func HandleConfirmUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.I
 	repo := repositories.UserRepository{db}
 	user, err := repo.GetUserById(id)
 	if err != nil {
-		RenderErrorResponseHelper(w, req, r, err.Error())
+		controllers.RenderErrorResponseHelper(w, req, r, err.Error())
 		return
 	}
 
 	if user.Status != domain.StatusPending {
-		RenderErrorResponseHelper(w, req, r, "User not pending confirmation")
+		controllers.RenderErrorResponseHelper(w, req, r, "User not pending confirmation")
 		return
 	}
 
 	if !user.IsCodeVerified(code) {
-		RenderErrorResponseHelper(w, req, r, "Invalid code")
+		controllers.RenderErrorResponseHelper(w, req, r, "Invalid code")
 		return
 	}
 
@@ -224,7 +225,7 @@ func HandleConfirmUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.I
 		Roles:  domain.Roles{domain.RoleUser},
 	})
 	if err != nil {
-		RenderErrorResponseHelper(w, req, r, err.Error())
+		controllers.RenderErrorResponseHelper(w, req, r, err.Error())
 		return
 	}
 
@@ -246,7 +247,7 @@ func HandleGetUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.ICont
 	repo := repositories.UserRepository{db}
 	user, err := repo.GetUserById(id)
 	if err != nil {
-		RenderErrorResponseHelper(w, req, r, "User not found")
+		controllers.RenderErrorResponseHelper(w, req, r, "User not found")
 		return
 	}
 
@@ -265,7 +266,7 @@ func HandleUpdateUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.IC
 	id := params["id"]
 
 	var body UpdateUserRequest_v0
-	err := DecodeJSONBodyHelper(w, req, r, &body)
+	err := controllers.DecodeJSONBodyHelper(w, req, r, &body)
 	if err != nil {
 		return
 	}
@@ -273,7 +274,7 @@ func HandleUpdateUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.IC
 	repo := repositories.UserRepository{db}
 	user, err := repo.UpdateUser(id, &body.User)
 	if err != nil {
-		RenderErrorResponseHelper(w, req, r, err.Error())
+		controllers.RenderErrorResponseHelper(w, req, r, err.Error())
 		return
 	}
 
@@ -295,7 +296,7 @@ func HandleDeleteUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.IC
 
 	err := repo.DeleteUser(id)
 	if err != nil {
-		RenderErrorResponseHelper(w, req, r, err.Error())
+		controllers.RenderErrorResponseHelper(w, req, r, err.Error())
 		return
 	}
 
