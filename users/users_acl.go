@@ -10,62 +10,125 @@ import (
 
 var UsersAPIACL = domain.ACLMap{
 	ListUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-		// enforce authenticated access
-		return (user != nil &&
-			user.Status == domain.StatusActive)
+		if user == nil {
+			// enforce authenticated access
+			return false
+		}
+		if user.Status != domain.StatusActive {
+			// must be an active user
+			return false
+		}
+		return true
 	},
 	GetUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-		// enforce authenticated access
-		return (user != nil &&
-			user.Status == domain.StatusActive)
+		if user == nil {
+			// enforce authenticated access
+			return false
+		}
+		if user.Status != domain.StatusActive {
+			// must be an active user
+			return false
+		}
+		return true
 	},
 	CreateUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-		// allow anonymous access; anyone can create a user account
+		// allow anonymous to create a user account
+		// if authenticated, only admin can create new users
+		// no point for non-admin to create new users
 		// TODO: only allow authorized but unauthenticated client
+		if user == nil {
+			// enforce authenticated access
+			return true
+		}
+		if user.Status != domain.StatusActive {
+			// must be an active user
+			return false
+		}
+		if !user.HasRole(domain.RoleAdmin) {
+			// must have an admin role
+			return false
+		}
 		return true
 	},
 	UpdateUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+		if user == nil {
+			// enforce authenticated access
+			return false
+		}
+		if user.Status != domain.StatusActive {
+			// must be an active user
+			return false
+		}
+		if !user.HasRole(domain.RoleAdmin) {
+			// must have an admin role
+			return false
+		}
 		// only logged-in admins can update users in batch
-		return (user != nil &&
-			user.Status == domain.StatusActive &&
-			user.HasRole(domain.RoleAdmin))
+		return true
 	},
 	DeleteAllUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+		if user == nil {
+			// enforce authenticated access
+			return false
+		}
+		if user.Status != domain.StatusActive {
+			// must be an active user
+			return false
+		}
+		if !user.HasRole(domain.RoleAdmin) {
+			// must have an admin role
+			return false
+		}
 		// only logged-in admins can update users in batch
-		return (user != nil &&
-			user.Status == domain.StatusActive &&
-			user.HasRole(domain.RoleAdmin))
+		return true
 	},
 	ConfirmUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
 		// allow anonymous access. user is expected to specify `code`
 		return true
 	},
 	UpdateUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-
-		// enforce authenticated access
-		if user == nil {
-			return false
-		}
-
 		params := mux.Vars(req)
 		id := params["id"]
 		db := ctx.GetDbCtx(req)
 		repo := repositories.UserRepository{db}
 
-		// retrieve target user
-		userTarget, err := repo.GetUserById(id)
-		if err != nil {
+		if user == nil {
+			// enforce authenticated access
 			return false
 		}
+		if user.Status != domain.StatusActive {
+			// must be an active user
+			return false
+		}
+		if user.HasRole(domain.RoleAdmin) {
+			// must have an admin role
+			return true
+		}
 
+		// retrieve target user
+		userTarget, _ := repo.GetUserById(id)
+		if userTarget != nil && user.ID == userTarget.ID {
+			// this is his own account
+			return true
+		}
 		// a user can only `update` its own user account or if user is an admin
-		return (user.Status == domain.StatusActive &&
-			(user.ID == userTarget.ID || user.HasRole(domain.RoleAdmin)))
+		return false
 	},
 	DeleteUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
 		// only an admin can `delete` a user account
-		return (user != nil &&
-			user.Status == domain.StatusActive &&
-			user.HasRole(domain.RoleAdmin))
+		if user == nil {
+			// enforce authenticated access
+			return false
+		}
+		if user.Status != domain.StatusActive {
+			// must be an active user
+			return false
+		}
+		if !user.HasRole(domain.RoleAdmin) {
+			// must have an admin role
+			return false
+		}
+		// only logged-in admins can update users in batch
+		return true
 	},
 }

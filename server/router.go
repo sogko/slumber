@@ -15,7 +15,7 @@ type Router struct {
 }
 
 // matcherFunc matches the handler to the correct API version based on its `accept` header
-// TODO: refactor matcher function as config.Config
+// TODO: refactor matcher function as server.Config
 func matcherFunc(r domain.Route, defaultHandler domain.ContextHandlerFunc, ctx domain.IContext, ac domain.IAccessController) func(r *http.Request, rm *mux.RouteMatch) bool {
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
 		acceptHeaders := libs.ParseAcceptHeaders(req.Header.Get("accept"))

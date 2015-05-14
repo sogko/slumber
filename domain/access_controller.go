@@ -10,6 +10,6 @@ type ACLMap map[string]ACLHandlerFunc
 type IAccessController interface {
 	Add(*ACLMap)
 	HasAction(string) bool
-	IsAuthorized(string, *User) bool
+	IsHTTPRequestAuthorized(req *http.Request, ctx IContext, action string, user *User) bool
 	Handler(action string, handler ContextHandlerFunc) ContextHandlerFunc
 }

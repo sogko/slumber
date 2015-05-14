@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// TODO: Currently, AccessController only acts as a gateway for endpoints on router level. Build AC to handler other aspects of ACL
 func NewAccessController() *AccessController {
 	ac := AccessController{}
 	ac.ACLMap = domain.ACLMap{}
@@ -15,14 +16,7 @@ func NewAccessController() *AccessController {
 
 // implements IAccessController
 type AccessController struct {
-	req    *http.Request
-	ctx    domain.IContext
 	ACLMap domain.ACLMap
-}
-
-func (ac *AccessController) SetRequestContext(req *http.Request, ctx domain.IContext) {
-	ac.req = req
-	ac.ctx = ctx
 }
 
 func (ac *AccessController) Add(_aclMap *domain.ACLMap) {
@@ -34,13 +28,13 @@ func (ac *AccessController) HasAction(action string) bool {
 	return (fn != nil)
 }
 
-func (ac *AccessController) IsAuthorized(action string, user *domain.User) bool {
+func (ac *AccessController) IsHTTPRequestAuthorized(req *http.Request, ctx domain.IContext, action string, user *domain.User) bool {
 	fn := ac.ACLMap[action]
 	if fn == nil {
 		// by default, if acl action/handler is not defined, request is not authorized
 		return false
 	}
-	return fn(user, ac.req, ac.ctx)
+	return fn(user, req, ctx)
 }
 
 func (ac *AccessController) Handler(action string, handler domain.ContextHandlerFunc) domain.ContextHandlerFunc {
@@ -51,7 +45,7 @@ func (ac *AccessController) Handler(action string, handler domain.ContextHandler
 		// `user` might be `nil` if has not authenticated.
 		// ACL might want to allow anonymous / non-authenticated access (for login, e.g)
 
-		if !ac.IsAuthorized(action, user) {
+		if !ac.IsHTTPRequestAuthorized(req, ctx, action, user) {
 			r.JSON(w, http.StatusForbidden, controllers.ErrorResponse_v0{
 				Message: "Forbidden (403)",
 				Success: false,

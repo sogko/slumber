@@ -61,7 +61,6 @@ var _ = Describe("AccessController", func() {
 
 		// create and init AccessController
 		ac = middlewares.NewAccessController()
-		ac.SetRequestContext(request, ctx)
 
 	})
 
@@ -127,32 +126,32 @@ var _ = Describe("AccessController", func() {
 		})
 	})
 
-	Describe("IsAuthorized()", func() {
+	Describe("IsHTTPRequestAuthorized()", func() {
 		BeforeEach(func() {
 			ac.Add(&aclMap)
 		})
 		Context("when user is authorized (an admin)", func() {
 			It("return OK", func() {
 				ctx.SetCurrentObjectCtx(request, normalUser)
-				Expect(ac.IsAuthorized("EditUser", adminUser)).To(BeTrue())
+				Expect(ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", adminUser)).To(BeTrue())
 			})
 		})
 		Context("when user is authorized (owns `user` resource)", func() {
 			It("return OK", func() {
 				ctx.SetCurrentObjectCtx(request, normalUser)
-				Expect(ac.IsAuthorized("EditUser", normalUser)).To(BeTrue())
+				Expect(ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", normalUser)).To(BeTrue())
 			})
 		})
 		Context("when user is not authorized", func() {
 			It("return not OK", func() {
 				ctx.SetCurrentObjectCtx(request, anotherNormalUser)
-				Expect(ac.IsAuthorized("EditUser", normalUser)).To(BeFalse())
+				Expect(ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", normalUser)).To(BeFalse())
 			})
 		})
 		Context("when action does not exists", func() {
 			It("return not OK", func() {
 				ctx.SetCurrentObjectCtx(request, normalUser)
-				Expect(ac.IsAuthorized("NonExistent", normalUser)).To(BeFalse())
+				Expect(ac.IsHTTPRequestAuthorized(request, ctx, "NonExistent", normalUser)).To(BeFalse())
 			})
 		})
 	})

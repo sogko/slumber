@@ -22,6 +22,7 @@ type IDatabase interface {
 	Remove(name string, query Query) error
 	RemoveAll(name string) error
 	Exists(name string, query Query) bool
+	DropDatabase() error
 }
 
 type IDatabaseSession interface {

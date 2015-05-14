@@ -44,6 +44,7 @@ func (db *MongoDB) NewSession() domain.IDatabaseSession {
 	if err != nil {
 		panic(err)
 	}
+	db.currentDb = session.DB(mongoOptions.DatabaseName)
 	return &MongoDBSession{session, mongoOptions}
 }
 
@@ -77,7 +78,9 @@ func (db *MongoDB) Exists(name string, query domain.Query) bool {
 	err := db.currentDb.C(name).Find(query).One(result)
 	return (err == nil)
 }
-
+func (db *MongoDB) DropDatabase() error {
+	return db.currentDb.DropDatabase()
+}
 // MongoDatabaseSession struct implements DatabaseSession interface
 type MongoDBSession struct {
 	*mgo.Session
