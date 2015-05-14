@@ -47,13 +47,25 @@ func (auth *Authenticator) Handler(w http.ResponseWriter, req *http.Request, nex
 			})
 			return
 		}
+
+		// Check that the token was not previously revoked
+		// TODO: Possible optimization, use Redis
+		revokedTokenRepo := repositories.RevokedTokenRepository{db}
+		if revokedTokenRepo.IsTokenRevoked(claims.JTI) {
+			r.JSON(w, http.StatusUnauthorized, controllers.ErrorResponse_v0{
+				Message: "Token has been revoked",
+				Success: false,
+			})
+			return
+		}
+
 		// store claims for request context
 		ctx.SetAuthenticatedClaimsCtx(req, claims)
 
 		// retrieve user object and store it in current request context
 		// this `user` object will be used by the AccessController middleware
-		repo := repositories.UserRepository{db}
-		user, _ := repo.GetUserById(claims.UserID)
+		userRepo := repositories.UserRepository{db}
+		user, _ := userRepo.GetUserById(claims.UserID)
 		ctx.SetCurrentUserCtx(req, user)
 
 	}

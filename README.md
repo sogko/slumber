@@ -109,10 +109,11 @@ $ openssl rsa -in demo.rsa -pubout > demo.rsa.pub
 * [x] User and roles management
 * [x] Session management using JWT tokens
 * [x] Activity-based access control (ABAC)
-* [-] Refactor using Dependency Inversion
+* [x] Refactor using Dependency Inversion
 * [ ] Task scheduler
 * [ ] Load test using vegeta
 * [ ] i18n (internationalisation)
 * [ ] Implement another router library for kicks
 * [ ] Consolidate util libraries and publish as separate package
 * [x] Abstract away negroni middlewares to a generic http.HandlerFunc
+* [x] Create a REST API server project using this package as a boilerplate without changing this package

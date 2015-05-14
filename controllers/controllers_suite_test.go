@@ -1,11 +1,11 @@
 package controllers_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	. "github.com/onsi/ginkgo/config"
-	"testing"
 	"fmt"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/config"
+	. "github.com/onsi/gomega"
+	"testing"
 )
 
 var TestDatabaseServerName = "localhost"

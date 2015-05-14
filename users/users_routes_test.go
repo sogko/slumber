@@ -8,15 +8,15 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/golang-rest-api-server-example/libs"
+	"github.com/sogko/golang-rest-api-server-example/middlewares"
+	"github.com/sogko/golang-rest-api-server-example/repositories"
 	"github.com/sogko/golang-rest-api-server-example/server"
 	"github.com/sogko/golang-rest-api-server-example/users"
-	"github.com/sogko/golang-rest-api-server-example/middlewares"
-	"github.com/sogko/golang-rest-api-server-example/libs"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"net/http/httptest"
 	"time"
-	"github.com/sogko/golang-rest-api-server-example/repositories"
 )
 
 const RequestAcceptHeader = "application/json;version=0.0"
@@ -95,12 +95,10 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 		// record HTTP responses
 		recorder = httptest.NewRecorder()
 
-		// create API users
-
 		// setup token authority
 		ta = middlewares.NewTokenAuthority(&middlewares.TokenAuthorityOptions{
 			PrivateSigningKey: privateSigningKey,
-			PublicSigningKey: publicSigningKey,
+			PublicSigningKey:  publicSigningKey,
 		})
 	})
 
@@ -456,8 +454,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 			var response users.UpdateUsersResponse_v0
 
 			BeforeEach(func() {
-				sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{
-				}, nil, &response)
+				sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{}, nil, &response)
 			})
 
 			It("returns status code of StatusForbidden (403)", func() {
@@ -474,8 +471,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				activeUser = gory.Build("user").(*domain.User)
 				db.Insert(repositories.UsersCollection, activeUser)
 
-				sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{
-				}, activeUser, &response)
+				sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{}, activeUser, &response)
 			})
 
 			It("returns status code of StatusForbidden (403)", func() {

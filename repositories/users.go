@@ -47,13 +47,13 @@ func (repo *UserRepository) DeleteUsers(ids []string) error {
 	if len(objectIds) == 0 {
 		return nil
 	}
-	err := repo.DB.Remove(UsersCollection, domain.Query{"_id": bson.M{"$in": objectIds}})
+	err := repo.DB.RemoveAll(UsersCollection, domain.Query{"_id": bson.M{"$in": objectIds}})
 	return err
 }
 
 // DeleteAllUsers Delete all users
 func (repo *UserRepository) DeleteAllUsers() error {
-	err := repo.DB.RemoveAll(UsersCollection)
+	err := repo.DB.DropCollection(UsersCollection)
 	return err
 }
 
@@ -127,6 +127,6 @@ func (repo *UserRepository) DeleteUser(id string) error {
 	if !bson.IsObjectIdHex(id) {
 		return errors.New(fmt.Sprintf("Invalid ObjectId: `%v`", id))
 	}
-	err := repo.DB.Remove(UsersCollection, domain.Query{"_id": bson.ObjectIdHex(id)})
+	err := repo.DB.RemoveOne(UsersCollection, domain.Query{"_id": bson.ObjectIdHex(id)})
 	return err
 }

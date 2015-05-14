@@ -65,11 +65,16 @@ func (db *MongoDB) Update(name string, query domain.Query, change domain.Change,
 	return err
 }
 
-func (db *MongoDB) Remove(name string, query domain.Query) error {
+func (db *MongoDB) RemoveOne(name string, query domain.Query) error {
 	return db.currentDb.C(name).Remove(query)
 }
 
-func (db *MongoDB) RemoveAll(name string) error {
+func (db *MongoDB) RemoveAll(name string, query domain.Query) error {
+	_, err := db.currentDb.C(name).RemoveAll(query)
+	return err
+}
+
+func (db *MongoDB) DropCollection(name string) error {
 	return db.currentDb.C(name).DropCollection()
 }
 
@@ -81,6 +86,7 @@ func (db *MongoDB) Exists(name string, query domain.Query) bool {
 func (db *MongoDB) DropDatabase() error {
 	return db.currentDb.DropDatabase()
 }
+
 // MongoDatabaseSession struct implements DatabaseSession interface
 type MongoDBSession struct {
 	*mgo.Session

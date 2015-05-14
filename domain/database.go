@@ -19,9 +19,10 @@ type IDatabase interface {
 	Update(name string, query Query, change Change, result interface{}) error
 	FindOne(name string, query Query, result interface{}) error
 	FindAll(name string, query Query, result interface{}) error
-	Remove(name string, query Query) error
-	RemoveAll(name string) error
+	RemoveOne(name string, query Query) error
+	RemoveAll(name string, query Query) error
 	Exists(name string, query Query) bool
+	DropCollection(name string) error
 	DropDatabase() error
 }
 

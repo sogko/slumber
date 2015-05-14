@@ -3,10 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/sogko/golang-rest-api-server-example/libs"
 	"github.com/sogko/golang-rest-api-server-example/middlewares"
 	"github.com/sogko/golang-rest-api-server-example/server"
 	"github.com/sogko/golang-rest-api-server-example/sessions"
-	"github.com/sogko/golang-rest-api-server-example/libs"
 	"github.com/sogko/golang-rest-api-server-example/users"
 	"io/ioutil"
 )

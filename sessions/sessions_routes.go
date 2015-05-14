@@ -32,4 +32,3 @@ var SessionsAPIRoutes = domain.Routes{
 		},
 	},
 }
-

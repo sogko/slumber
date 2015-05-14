@@ -4,6 +4,7 @@ import (
 	"github.com/sogko/golang-rest-api-server-example/controllers"
 	"github.com/sogko/golang-rest-api-server-example/domain"
 	"github.com/sogko/golang-rest-api-server-example/repositories"
+	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
 )
@@ -15,6 +16,11 @@ type CreateSessionRequest_v0 struct {
 type CreateSessionResponse_v0 struct {
 	Token   string `json:"token"`
 	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+type DeleteSessionResponse_v0 struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
 }
 
 // HandleCreateSession_v0 verify user's credentials and generates a JWT token if valid
@@ -58,7 +64,6 @@ func HandleCreateSession_v0(w http.ResponseWriter, req *http.Request, ctx domain
 	})
 
 	if err != nil {
-		log.Println("err", err.Error())
 		controllers.RenderErrorResponseHelper(w, req, r, "Error creating session token")
 		return
 	}
@@ -66,23 +71,35 @@ func HandleCreateSession_v0(w http.ResponseWriter, req *http.Request, ctx domain
 	r.JSON(w, http.StatusCreated, CreateSessionResponse_v0{
 		Token:   tokenString,
 		Success: true,
+		Message: "Session token created",
 	})
 }
 
 // HandleDeleteSession_v0 invalidates a session token
 func HandleDeleteSession_v0(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {
 	r := ctx.GetRendererCtx(req)
+	db := ctx.GetDbCtx(req)
 	claims := ctx.GetAuthenticatedClaimsCtx(req)
 
-	log.Println("Claim", claims)
-	var body CreateSessionRequest_v0
-	err := controllers.DecodeJSONBodyHelper(w, req, r, &body)
-	if err != nil {
+	if !bson.IsObjectIdHex(claims.JTI) {
+		// simply return because we can't blacklist a token without identifier
+		r.JSON(w, http.StatusOK, DeleteSessionResponse_v0{
+			Success: true,
+			Message: "Session removed",
+		})
 		return
 	}
+	repo := repositories.RevokedTokenRepository{db}
+	err := repo.CreateRevokedToken(&domain.RevokedToken{
+		ID:         bson.ObjectIdHex(claims.JTI),
+		ExpiryDate: claims.ExpireAt,
+	})
+	if err != nil {
+		log.Println("HandleDeleteSession_v0: Failed to create revoked token", err.Error())
+	}
 
-	r.JSON(w, http.StatusOK, CreateSessionResponse_v0{
-		Token:   "TEST",
+	r.JSON(w, http.StatusOK, DeleteSessionResponse_v0{
 		Success: true,
+		Message: "Session removed",
 	})
 }

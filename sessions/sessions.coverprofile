@@ -1,0 +1,21 @@
+mode: atomic
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_acl.go:9.86,12.3 1 10
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_acl.go:13.86,16.3 1 6
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:27.92,34.16 6 10
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:38.2,38.25 1 8
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:43.2,45.16 3 6
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:50.2,50.48 1 4
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:55.2,56.34 2 2
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:60.2,66.16 2 2
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:71.2,75.4 1 2
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:34.16,36.3 1 2
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:38.25,41.3 2 2
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:45.16,48.3 2 2
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:50.48,53.3 2 2
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:56.34,58.3 1 2
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:66.16,69.3 2 0
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:79.92,84.37 4 6
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:92.2,97.16 3 4
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:101.2,104.4 1 4
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:84.37,91.3 2 2
+github.com/sogko/golang-rest-api-server-example/sessions/sessions_controllers.go:97.16,99.3 1 0

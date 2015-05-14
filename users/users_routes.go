@@ -95,4 +95,3 @@ var UsersAPIRoutes = domain.Routes{
 		},
 	},
 }
-

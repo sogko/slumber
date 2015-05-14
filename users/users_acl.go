@@ -7,7 +7,6 @@ import (
 	"net/http"
 )
 
-
 var UsersAPIACL = domain.ACLMap{
 	ListUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
 		if user == nil {

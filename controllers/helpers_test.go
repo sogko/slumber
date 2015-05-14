@@ -4,13 +4,13 @@ import (
 	"bytes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sogko/golang-rest-api-server-example/server"
-	"github.com/sogko/golang-rest-api-server-example/domain"
 	"github.com/sogko/golang-rest-api-server-example/controllers"
+	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/golang-rest-api-server-example/libs"
 	"github.com/sogko/golang-rest-api-server-example/middlewares"
+	"github.com/sogko/golang-rest-api-server-example/server"
 	"net/http"
 	"net/http/httptest"
-	"github.com/sogko/golang-rest-api-server-example/libs"
 )
 
 var _ = Describe("Controller helpers", func() {
@@ -64,7 +64,7 @@ var _ = Describe("Controller helpers", func() {
 			},
 			Renderer: &middlewares.RendererOptions{},
 			Routes:   &domain.Routes{route},
-			ACLMap:   &domain.ACLMap{
+			ACLMap: &domain.ACLMap{
 				"Test": func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
 					return (true)
 				},

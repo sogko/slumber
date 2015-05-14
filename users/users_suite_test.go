@@ -9,9 +9,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/sogko/golang-rest-api-server-example/domain"
 	"gopkg.in/mgo.v2/bson"
+	"io/ioutil"
 	"testing"
 	"time"
-	"io/ioutil"
 )
 
 var TestDatabaseServerName = "localhost"
