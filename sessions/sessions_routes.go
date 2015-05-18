@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	GetSession    = "GetSession"
 	CreateSession = "CreateSession"
 	DeleteSession = "DeleteSession"
 )
@@ -13,6 +14,15 @@ const (
 var SessionsAPIRoutes = domain.Routes{
 
 	//------------- API /sessions ---------//
+	domain.Route{
+		Name:           GetSession,
+		Method:         "GET",
+		Pattern:        "/api/sessions",
+		DefaultVersion: "0.0",
+		RouteHandlers: domain.RouteHandlers{
+			"0.0": HandleGetSession_v0,
+		},
+	},
 	domain.Route{
 		Name:           CreateSession,
 		Method:         "POST",

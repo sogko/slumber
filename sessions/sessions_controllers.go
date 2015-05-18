@@ -9,6 +9,11 @@ import (
 	"net/http"
 )
 
+type GetSessionResponse_v0 struct {
+	User    domain.User `json:"user"`
+	Success bool        `json:"success"`
+	Message string      `json:"message"`
+}
 type CreateSessionRequest_v0 struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -21,6 +26,18 @@ type CreateSessionResponse_v0 struct {
 type DeleteSessionResponse_v0 struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+// HandleGetSession_v0 Get session details
+func HandleGetSession_v0(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {
+	r := ctx.GetRendererCtx(req)
+	user := ctx.GetCurrentUserCtx(req)
+
+	r.JSON(w, http.StatusOK, GetSessionResponse_v0{
+		User:    *user,
+		Success: true,
+		Message: "Session details retrieved",
+	})
 }
 
 // HandleCreateSession_v0 verify user's credentials and generates a JWT token if valid

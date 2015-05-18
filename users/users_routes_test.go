@@ -329,6 +329,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 		})
 
 	})
+
 	Describe("PUT /api/users", func() {
 
 		Context("when API user is an active admin", func() {

@@ -14,7 +14,6 @@ import (
 	"github.com/sogko/golang-rest-api-server-example/repositories"
 	"github.com/sogko/golang-rest-api-server-example/server"
 	"github.com/sogko/golang-rest-api-server-example/sessions"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"net/http/httptest"
 	"time"
@@ -80,7 +79,9 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 		}
 		// set API version through accept header
 		request.Header.Set("Accept", RequestAcceptHeader)
-		request.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
+		if token != "" {
+			request.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
+		}
 
 		// serve request
 		s.ServeHTTP(recorder, request)
@@ -124,7 +125,52 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 		// drop database after each test
 		db.DropDatabase()
 	})
+	Describe("GET /api/sessions", func() {
+		var token string
 
+		var user *domain.User
+		BeforeEach(func() {
+			// insert a user
+			user = gory.Build("user").(*domain.User)
+			user.SetPassword(TestValidPassword)
+			db.Insert(repositories.UsersCollection, user)
+
+			// create a session token
+			token, _ = ta.CreateNewSessionToken(&domain.TokenClaims{
+				UserID: user.ID.Hex(),
+				Status: "active",
+				Roles:  []string{"admin"},
+			})
+
+		})
+
+		Context("when token is still valid", func() {
+			var response sessions.GetSessionResponse_v0
+			BeforeEach(func() {
+				sendRequestWithTokenHelper(recorder, "GET", "/api/sessions", nil, token, &response)
+			})
+			It("returns status code of StatusOK (200)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusOK))
+			})
+			It("returns response", func() {
+				Expect(response.User.ID).To(Equal(user.ID))
+				Expect(response.Success).To(Equal(true))
+			})
+		})
+
+		Context("when request is non-authenticated", func() {
+			var response sessions.GetSessionResponse_v0
+			BeforeEach(func() {
+				sendRequestWithTokenHelper(recorder, "GET", "/api/sessions", nil, "", &response)
+			})
+			It("returns status code of StatusForbidden (403)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+			It("returns response", func() {
+				Expect(response.Success).To(Equal(false))
+			})
+		})
+	})
 	Describe("POST /api/sessions", func() {
 
 		var user *domain.User
@@ -248,7 +294,7 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 
 			// create a session token
 			token, _ = ta.CreateNewSessionToken(&domain.TokenClaims{
-				UserID: bson.NewObjectId().Hex(),
+				UserID: user.ID.Hex(),
 				Status: "active",
 				Roles:  []string{"admin"},
 			})
@@ -272,11 +318,16 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 			var responseDelete sessions.DeleteSessionResponse_v0
 			BeforeEach(func() {
 
+				// insert a user
+				user = gory.Build("user").(*domain.User)
+				user.SetPassword(TestValidPassword)
+				db.Insert(repositories.UsersCollection, user)
+
 				// manually generate jwt so that we can set an invalid JTI claim
 				// possible from a malicious attacker
 				tokenObj := jwt.New(jwt.SigningMethodRS512)
 				tokenObj.Claims = map[string]interface{}{
-					"user_id": bson.NewObjectId().Hex(),
+					"user_id": user.ID.Hex(),
 					"status":  "active",
 					"roles":   []string{"admin"},
 					"exp":     time.Now().Add(time.Hour * 72).Format(time.RFC3339), // 3 days

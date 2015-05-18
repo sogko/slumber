@@ -38,6 +38,14 @@ func (ctx *Context) Inject(handler domain.ContextHandlerFunc) http.HandlerFunc {
 	}
 }
 
+func (ctx *Context) Set(r *http.Request, key interface{}, val interface{}) {
+	context.Set(r, key, val)
+}
+
+func (ctx *Context) Get(r *http.Request, key interface{}) interface{} {
+	return context.Get(r, key)
+}
+
 // SetRouteCtx Sets the Database reference for the given request context
 func (ctx *Context) SetRouteCtx(r *http.Request, val *domain.Route) *domain.Route {
 	context.Set(r, RouteKey, val)

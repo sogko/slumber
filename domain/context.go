@@ -5,6 +5,8 @@ import (
 )
 
 type IContext interface {
+	Set(r *http.Request, key interface{}, val interface{})
+	Get(r *http.Request, key interface{}) interface{}
 	SetRouteCtx(r *http.Request, val *Route) *Route
 	GetRouteCtx(r *http.Request) *Route
 	SetDbCtx(r *http.Request, val IDatabase) IDatabase

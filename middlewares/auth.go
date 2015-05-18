@@ -65,9 +65,12 @@ func (auth *Authenticator) Handler(w http.ResponseWriter, req *http.Request, nex
 		// retrieve user object and store it in current request context
 		// this `user` object will be used by the AccessController middleware
 		userRepo := repositories.UserRepository{db}
-		user, _ := userRepo.GetUserById(claims.UserID)
+		user, err := userRepo.GetUserById(claims.UserID)
+		if err != nil {
+			// `user` = nil indicates that current authentication failed
+			user = nil
+		}
 		ctx.SetCurrentUserCtx(req, user)
-
 	}
 	next(w, req)
 }
