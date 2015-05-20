@@ -9,13 +9,14 @@ import (
 type contextKey string
 
 const (
-	RouteKey          contextKey = "RouteKey"
-	DbKey             contextKey = "DbKey"
-	RendererKey       contextKey = "RendererKey"
-	TokenClaimsKey    contextKey = "TokenClaimsKey"
-	TokenAuthorityKey contextKey = "TokenAuthorityKey"
-	CurrentUserKey    contextKey = "CurrentUserKey"
-	CurrentObjectKey  contextKey = "CurrentObjectKey"
+	RouteKey              contextKey = "RouteKey"
+	DbKey                 contextKey = "DbKey"
+	RendererKey           contextKey = "RendererKey"
+	TokenClaimsKey        contextKey = "TokenClaimsKey"
+	TokenAuthorityKey     contextKey = "TokenAuthorityKey"
+	CurrentUserKey        contextKey = "CurrentUserKey"
+	CurrentObjectKey      contextKey = "CurrentObjectKey"
+	ControllerHooksMapKey contextKey = "ControllerHooksMapKey"
 )
 
 func NewContext() *Context {
@@ -140,6 +141,20 @@ func (ctx *Context) SetCurrentObjectCtx(r *http.Request, val interface{}) interf
 func (ctx *Context) GetCurrentObjectCtx(r *http.Request) interface{} {
 	if r := context.Get(r, CurrentObjectKey); r != nil {
 		return r
+	}
+	return nil
+}
+
+// SetControllerHooksMapCtx Set the TokenAuthority reference for the given request context
+func (ctx *Context) SetControllerHooksMapCtx(r *http.Request, val *domain.ControllerHooksMap) *domain.ControllerHooksMap {
+	context.Set(r, ControllerHooksMapKey, val)
+	return val
+}
+
+// GetControllerHooksMapCtx the TokenAuthority reference for the given request context
+func (ctx *Context) GetControllerHooksMapCtx(r *http.Request) *domain.ControllerHooksMap {
+	if r := context.Get(r, ControllerHooksMapKey); r != nil {
+		return r.(*domain.ControllerHooksMap)
 	}
 	return nil
 }

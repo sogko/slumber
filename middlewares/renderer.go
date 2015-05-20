@@ -35,3 +35,7 @@ func (renderer *Renderer) JSON(w http.ResponseWriter, status int, v interface{})
 func (renderer *Renderer) Data(w http.ResponseWriter, status int, v []byte) {
 	renderer.Render.Data(w, status, v)
 }
+func (renderer *Renderer) Text(w http.ResponseWriter, status int, v []byte) {
+	w.WriteHeader(status)
+	w.Write(v)
+}

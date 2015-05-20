@@ -50,6 +50,7 @@ func main() {
 
 	// init server and run
 	s := server.NewServer(&config)
+
 	// bam!
 	s.Run(":3001")
 }

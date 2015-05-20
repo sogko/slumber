@@ -229,6 +229,18 @@ func HandleConfirmUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.I
 		return
 	}
 
+	// run a post-confirmation hook
+	hooks := ctx.GetControllerHooksMapCtx(req)
+	if hooks.PostConfirmUserHook != nil {
+		err = hooks.PostConfirmUserHook(req, ctx, &domain.PostUserConfirmationHookPayload{
+			User: user,
+		})
+		if err != nil {
+			controllers.RenderErrorResponseHelper(w, req, r, err.Error())
+			return
+		}
+	}
+
 	r.JSON(w, http.StatusOK, ConfirmUserResponse_v0{
 		Code:    code,
 		User:    *user,
