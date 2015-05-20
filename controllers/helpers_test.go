@@ -69,7 +69,7 @@ var _ = Describe("Controller helpers", func() {
 					return (true)
 				},
 			},
-		})
+		}).SetupRoutes()
 
 		// record HTTP responses
 		recorder = httptest.NewRecorder()

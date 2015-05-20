@@ -79,15 +79,23 @@ func NewServer(options *Config) *Server {
 	return s
 }
 
-func (s *Server) UseMiddleware(middleware func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc, ctx domain.IContext)) {
+func (s *Server) UseMiddleware(middleware func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc, ctx domain.IContext)) *Server {
 	s.negroni.Use(negroni.HandlerFunc(s.Context.InjectWithNext(middleware)))
+	return s
 }
 
-func (s *Server) SetupRoutes() {
+func (s *Server) SetupRoutes() *Server {
 	// add router and clear mux.context values at the end of request life-times
 	s.negroni.UseHandler(context.ClearHandler(s.router))
+	return s
 }
 
-func (s *Server) Run(address string) {
+func (s *Server) Run(address string) *Server {
 	s.negroni.Run(address)
+	return s
+}
+
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) *Server {
+	s.negroni.ServeHTTP(w, r)
+	return s
 }

@@ -109,7 +109,7 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 			},
 			Routes: &sessions.SessionsAPIRoutes,
 			ACLMap: &sessions.SessionsAPIACL,
-		})
+		}).SetupRoutes()
 
 		// record HTTP responses
 		recorder = httptest.NewRecorder()

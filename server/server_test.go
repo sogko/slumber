@@ -39,7 +39,7 @@ var _ = Describe("Server", func() {
 			Renderer:       &middlewares.RendererOptions{},
 			Routes:         routes,
 			TokenAuthority: &middlewares.TokenAuthorityOptions{},
-		})
+		}).SetupRoutes()
 	})
 
 	Describe("Bad database server config", func() {

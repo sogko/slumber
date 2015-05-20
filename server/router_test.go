@@ -64,7 +64,7 @@ var _ = Describe("Router", func() {
 				Routes:         routes,
 				TokenAuthority: &middlewares.TokenAuthorityOptions{},
 				ACLMap:         &aclMap,
-			})
+			}).SetupRoutes()
 
 			// record HTTP responses
 			recorder = httptest.NewRecorder()
@@ -156,7 +156,7 @@ var _ = Describe("Router", func() {
 				s = server.NewServer(&server.Config{
 					Database: &dbOptions,
 					Renderer: &renderOptions,
-				})
+				}).SetupRoutes()
 
 			}).Should(Panic())
 		})
@@ -175,7 +175,7 @@ var _ = Describe("Router", func() {
 					Database: &dbOptions,
 					Renderer: &renderOptions,
 					Routes:   routes,
-				})
+				}).SetupRoutes()
 
 			}).Should(Panic())
 		})

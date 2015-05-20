@@ -90,7 +90,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 			},
 			Routes: &users.UsersAPIRoutes,
 			ACLMap: &users.UsersAPIACL,
-		})
+		}).SetupRoutes()
 
 		// record HTTP responses
 		recorder = httptest.NewRecorder()

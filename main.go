@@ -49,7 +49,7 @@ func main() {
 	}
 
 	// init server and run
-	s := server.NewServer(&config)
+	s := server.NewServer(&config).SetupRoutes()
 
 	// bam!
 	s.Run(":3001")
