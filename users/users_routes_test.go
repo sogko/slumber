@@ -55,9 +55,10 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				rolesString = append(rolesString, string(role))
 			}
 			token, _ := ta.CreateNewSessionToken(&domain.TokenClaims{
-				UserID: apiUser.ID.Hex(),
-				Status: apiUser.Status,
-				Roles:  rolesString,
+				UserID:   apiUser.ID.Hex(),
+				Username: apiUser.Username,
+				Status:   apiUser.Status,
+				Roles:    rolesString,
 			})
 			request.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 		}

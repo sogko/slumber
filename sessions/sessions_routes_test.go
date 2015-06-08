@@ -57,9 +57,10 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 				rolesString = append(rolesString, string(role))
 			}
 			token, _ := ta.CreateNewSessionToken(&domain.TokenClaims{
-				UserID: apiUser.ID.Hex(),
-				Status: apiUser.Status,
-				Roles:  rolesString,
+				UserID:   apiUser.ID.Hex(),
+				Username: apiUser.Username,
+				Status:   apiUser.Status,
+				Roles:    rolesString,
 			})
 			request.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 		}
@@ -137,9 +138,10 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 
 			// create a session token
 			token, _ = ta.CreateNewSessionToken(&domain.TokenClaims{
-				UserID: user.ID.Hex(),
-				Status: "active",
-				Roles:  []string{"admin"},
+				UserID:   user.ID.Hex(),
+				Username: user.Username,
+				Status:   "active",
+				Roles:    []string{"admin"},
 			})
 
 		})
@@ -202,6 +204,7 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 
 				Expect(token.Valid).To(Equal(true))
 				Expect(claims.UserID).To(Equal(user.ID.Hex()))
+				Expect(claims.Username).To(Equal(user.Username))
 				Expect(claims.Status).To(Equal(user.Status))
 				Expect(len(claims.Roles)).To(Equal(len(user.Roles)))
 			})
@@ -294,9 +297,10 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 
 			// create a session token
 			token, _ = ta.CreateNewSessionToken(&domain.TokenClaims{
-				UserID: user.ID.Hex(),
-				Status: "active",
-				Roles:  []string{"admin"},
+				UserID:   user.ID.Hex(),
+				Username: user.Username,
+				Status:   "active",
+				Roles:    []string{"admin"},
 			})
 
 		})
@@ -327,12 +331,12 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 				// possible from a malicious attacker
 				tokenObj := jwt.New(jwt.SigningMethodRS512)
 				tokenObj.Claims = map[string]interface{}{
-					"user_id": user.ID.Hex(),
-					"status":  "active",
-					"roles":   []string{"admin"},
-					"exp":     time.Now().Add(time.Hour * 72).Format(time.RFC3339), // 3 days
-					"iat":     time.Now().Format(time.RFC3339),
-					"jti":     "INVALIDJTI",
+					"userId": user.ID.Hex(),
+					"status": "active",
+					"roles":  []string{"admin"},
+					"exp":    time.Now().Add(time.Hour * 72).Format(time.RFC3339), // 3 days
+					"iat":    time.Now().Format(time.RFC3339),
+					"jti":    "INVALIDJTI",
 				}
 				token, _ := tokenObj.SignedString(privateSigningKey)
 				sendRequestWithTokenHelper(recorder, "DELETE", "/api/sessions", nil, token, &responseDelete)

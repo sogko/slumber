@@ -6,6 +6,7 @@ import (
 
 const (
 	ListUsers      = "ListUsers"
+	CountUsers     = "CountUsers"
 	GetUser        = "GetUser"
 	CreateUser     = "CreateUser"
 	UpdateUsers    = "UpdateUsers"
@@ -24,6 +25,15 @@ var UsersAPIRoutes = domain.Routes{
 		DefaultVersion: "0.0",
 		RouteHandlers: domain.RouteHandlers{
 			"0.0": HandleListUsers_v0,
+		},
+	},
+	domain.Route{
+		Name:           CountUsers,
+		Method:         "GET",
+		Pattern:        "/api/users/count",
+		DefaultVersion: "0.0",
+		RouteHandlers: domain.RouteHandlers{
+			"0.0": HandleCountUsers_v0,
 		},
 	},
 	domain.Route{

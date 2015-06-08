@@ -11,6 +11,7 @@ type ITokenClaims interface {
 }
 type TokenClaims struct {
 	UserID   string
+	Username string
 	Status   string
 	Roles    []string
 	ExpireAt time.Time
@@ -18,7 +19,7 @@ type TokenClaims struct {
 	JTI      string
 }
 type RevokedToken struct {
-	ID          bson.ObjectId `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID          bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
 	ExpiryDate  time.Time     `json:"exp" bson:"exp"`
 	RevokedDate time.Time     `json:"revokedat" bson:"revokedat"`
 }

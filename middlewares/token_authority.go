@@ -40,12 +40,13 @@ func (ta *TokenAuthority) CreateNewSessionToken(claims *domain.TokenClaims) (str
 	token := jwt.New(jwt.SigningMethodRS512)
 
 	token.Claims = map[string]interface{}{
-		"user_id": claims.UserID,
-		"status":  claims.Status,
-		"roles":   claims.Roles,
-		"exp":     time.Now().Add(time.Hour * 72).Format(time.RFC3339), // 3 days
-		"iat":     time.Now().Format(time.RFC3339),
-		"jti":     generateJTI(),
+		"userId":   claims.UserID,
+		"username": claims.Username,
+		"status":   claims.Status,
+		"roles":    claims.Roles,
+		"exp":      time.Now().Add(time.Hour * 72).Format(time.RFC3339), // 3 days
+		"iat":      time.Now().Format(time.RFC3339),
+		"jti":      generateJTI(),
 	}
 	tokenString, err := token.SignedString(ta.Options.PrivateSigningKey)
 
@@ -65,8 +66,11 @@ func (ta *TokenAuthority) VerifyTokenString(tokenStr string) (domain.Token, *dom
 
 	var claims domain.TokenClaims
 	if token.Valid {
-		if token.Claims["user_id"] != nil {
-			claims.UserID = token.Claims["user_id"].(string)
+		if token.Claims["userId"] != nil {
+			claims.UserID = token.Claims["userId"].(string)
+		}
+		if token.Claims["username"] != nil {
+			claims.Username = token.Claims["username"].(string)
 		}
 		if token.Claims["status"] != nil {
 			claims.Status = token.Claims["status"].(string)

@@ -75,15 +75,29 @@ func HandleCreateSession_v0(w http.ResponseWriter, req *http.Request, ctx domain
 	}
 
 	tokenString, err := ta.CreateNewSessionToken(&domain.TokenClaims{
-		UserID: user.ID.Hex(),
-		Status: user.Status,
-		Roles:  rolesString,
+		UserID:   user.ID.Hex(),
+		Username: user.Username,
+		Status:   user.Status,
+		Roles:    rolesString,
 	})
 
 	if err != nil {
 		controllers.RenderErrorResponseHelper(w, req, r, "Error creating session token")
 		return
 	}
+
+	// run a post-create-session hook{
+	hooks := ctx.GetControllerHooksMapCtx(req)
+	if hooks.PostCreateSessionHook != nil {
+		err = hooks.PostCreateSessionHook(w, req, ctx, &domain.PostCreateSessionHookPayload{
+			TokenString: tokenString,
+		})
+		if err != nil {
+			controllers.RenderErrorResponseHelper(w, req, r, err.Error())
+			return
+		}
+	}
+	// TODO: update user object with last logged-in
 
 	r.JSON(w, http.StatusCreated, CreateSessionResponse_v0{
 		Token:   tokenString,
@@ -97,8 +111,19 @@ func HandleDeleteSession_v0(w http.ResponseWriter, req *http.Request, ctx domain
 	r := ctx.GetRendererCtx(req)
 	db := ctx.GetDbCtx(req)
 	claims := ctx.GetAuthenticatedClaimsCtx(req)
+	hooks := ctx.GetControllerHooksMapCtx(req)
 
-	if !bson.IsObjectIdHex(claims.JTI) {
+	if claims == nil || !bson.IsObjectIdHex(claims.JTI) {
+		// run a post-delete-session hook (
+		if hooks.PostDeleteSessionHook != nil {
+			err := hooks.PostDeleteSessionHook(w, req, ctx, &domain.PostDeleteSessionHookPayload{
+				Claims: claims,
+			})
+			if err != nil {
+				controllers.RenderErrorResponseHelper(w, req, r, err.Error())
+				return
+			}
+		}
 		// simply return because we can't blacklist a token without identifier
 		r.JSON(w, http.StatusOK, DeleteSessionResponse_v0{
 			Success: true,
@@ -113,6 +138,17 @@ func HandleDeleteSession_v0(w http.ResponseWriter, req *http.Request, ctx domain
 	})
 	if err != nil {
 		log.Println("HandleDeleteSession_v0: Failed to create revoked token", err.Error())
+	}
+
+	// run a post-delete-session hook{
+	if hooks.PostDeleteSessionHook != nil {
+		err = hooks.PostDeleteSessionHook(w, req, ctx, &domain.PostDeleteSessionHookPayload{
+			Claims: claims,
+		})
+		if err != nil {
+			controllers.RenderErrorResponseHelper(w, req, r, err.Error())
+			return
+		}
 	}
 
 	r.JSON(w, http.StatusOK, DeleteSessionResponse_v0{

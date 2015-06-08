@@ -7,19 +7,19 @@ A complete example of a REST-ful API server in Go
 
 ## Features
 - Simple, flexible and testable architecture
--- Light-weight server component
--- Easy to replace components with your own library of choice (router, database driver, etc)
--- Guaranteed thread-safety for each request: uses `gorilla/context` for per-request context
+  - Light-weight server component
+  - Easy to replace components with your own library of choice (router, database driver, etc)
+  - Guaranteed thread-safety for each request: uses `gorilla/context` for per-request context
 - Not a framework
--- More like a project to quickly kick-start your own REST API server, customized to your own needs.
+  - More like a project to quickly kick-start your own REST API server, customized to your own needs.
 - Each REST resource is a separate package
--- Modular approach
--- Separation between `model`, `controller` and `data` layers
--- Clear abstraction from `server` package 
+  - Modular approach
+  - Separation between `model`, `controller` and `data`/`repo` layers
+  - Clear abstraction from `server` package 
 - Highly-testable code base
--- Unit-tested `server`; 100% code coverage
--- Easily test REST resources routes
--- Parallelizable test suite
+  - Unit-tested `server`; 100% code coverage
+  - Easily test REST resources routes
+  - Parallelizable test suite
 
 
 ## Quick start

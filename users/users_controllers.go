@@ -6,12 +6,14 @@ import (
 	"github.com/sogko/golang-rest-api-server-example/domain"
 	"github.com/sogko/golang-rest-api-server-example/repositories"
 	"net/http"
+	"strconv"
 )
 
 //---- User Request API v0 ----
 
 type ListUsersResponse_v0 struct {
 	Users   domain.Users `json:"users"`
+	LastID  string       `json:"last_id, omitempty"`
 	Message string       `json:"message,omitempty"`
 	Success bool         `json:"success"`
 }
@@ -63,7 +65,14 @@ type UpdateUserResponse_v0 struct {
 	Message string      `json:"message,omitempty"`
 	Success bool        `json:"success"`
 }
+
 type DeleteUserResponse_v0 struct {
+	Message string `json:"message,omitempty"`
+	Success bool   `json:"success"`
+}
+
+type CountUsersResponse_v0 struct {
+	Count   int    `json:"count,omitempty"`
 	Message string `json:"message,omitempty"`
 	Success bool   `json:"success"`
 }
@@ -72,12 +81,29 @@ type DeleteUserResponse_v0 struct {
 func HandleListUsers_v0(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {
 	r := ctx.GetRendererCtx(req)
 	db := ctx.GetDbCtx(req)
-
 	repo := repositories.UserRepository{db}
-	users := repo.GetUsers()
 
+	// filter & pagination params
+	field := req.FormValue("field")
+	query := req.FormValue("q")
+	lastID := req.FormValue("last_id")
+	perPageStr := req.FormValue("per_page")
+	sort := req.FormValue("sort")
+
+	perPage, err := strconv.Atoi(perPageStr)
+	if err != nil {
+		perPage = 20
+	}
+
+	var users domain.Users
+	users = repo.FilterUsers(field, query, lastID, perPage, sort)
+
+	if len(users) > 0 {
+		lastID = users[len(users)-1].ID.Hex()
+	}
 	r.JSON(w, http.StatusOK, ListUsersResponse_v0{
 		Users:   users,
+		LastID:  lastID,
 		Message: "User list retrieved",
 		Success: true,
 	})
@@ -232,7 +258,7 @@ func HandleConfirmUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.I
 	// run a post-confirmation hook
 	hooks := ctx.GetControllerHooksMapCtx(req)
 	if hooks.PostConfirmUserHook != nil {
-		err = hooks.PostConfirmUserHook(req, ctx, &domain.PostUserConfirmationHookPayload{
+		err = hooks.PostConfirmUserHook(w, req, ctx, &domain.PostUserConfirmationHookPayload{
 			User: user,
 		})
 		if err != nil {
@@ -314,6 +340,24 @@ func HandleDeleteUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.IC
 
 	r.JSON(w, http.StatusOK, DeleteUserResponse_v0{
 		Message: "User deleted",
+		Success: true,
+	})
+}
+
+func HandleCountUsers_v0(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {
+	r := ctx.GetRendererCtx(req)
+	db := ctx.GetDbCtx(req)
+
+	// filter & pagination params
+	field := req.FormValue("field")
+	query := req.FormValue("q")
+
+	repo := repositories.UserRepository{db}
+	count := repo.CountUsers(field, query)
+
+	r.JSON(w, http.StatusOK, CountUsersResponse_v0{
+		Count:   count,
+		Message: "Users count retrieved",
 		Success: true,
 	})
 }

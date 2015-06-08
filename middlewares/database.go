@@ -52,8 +52,15 @@ func (db *MongoDB) FindOne(name string, query domain.Query, result interface{}) 
 	return db.currentDb.C(name).Find(query).One(result)
 }
 
-func (db *MongoDB) FindAll(name string, query domain.Query, result interface{}) error {
-	return db.currentDb.C(name).Find(query).All(result)
+func (db *MongoDB) FindAll(name string, query domain.Query, result interface{}, limit int, sort string) error {
+	if sort == "" {
+		sort = "-_id"
+	}
+	return db.currentDb.C(name).Find(query).Sort(sort).Limit(limit).All(result)
+}
+
+func (db *MongoDB) Count(name string, query domain.Query) (int, error) {
+	return db.currentDb.C(name).Find(query).Count()
 }
 
 func (db *MongoDB) Insert(name string, obj interface{}) error {
@@ -85,6 +92,10 @@ func (db *MongoDB) Exists(name string, query domain.Query) bool {
 }
 func (db *MongoDB) DropDatabase() error {
 	return db.currentDb.DropDatabase()
+}
+
+func (db *MongoDB) EnsureIndex(name string, index mgo.Index) error {
+	return db.currentDb.C(name).EnsureIndex(index)
 }
 
 // MongoDatabaseSession struct implements DatabaseSession interface

@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/sogko/golang-rest-api-server-example/domain"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"log"
 	"time"
 )
 
@@ -26,11 +28,96 @@ func (repo *UserRepository) CreateUser(user *domain.User) error {
 // GetUsers Get list of users
 func (repo *UserRepository) GetUsers() domain.Users {
 	users := domain.Users{}
-	err := repo.DB.FindAll(UsersCollection, nil, &users)
+	err := repo.DB.FindAll(UsersCollection, nil, &users, 50, "")
 	if err != nil {
 		return domain.Users{}
 	}
 	return users
+}
+
+func (repo *UserRepository) FilterUsers(field string, query string, lastID string, limit int, sort string) domain.Users {
+	users := domain.Users{}
+
+	// ensure that collection has the right text index
+	// refactor building collection index
+	err := repo.DB.EnsureIndex(UsersCollection, mgo.Index{
+		Key: []string{
+			"$text:username",
+			"$text:email",
+			"$text:status",
+		},
+		Background: true,
+		Sparse:     true,
+	})
+	if err != nil {
+		log.Println("FilterUsers: EnsureIndex", err.Error())
+	}
+	// parse sort string
+	allowedSortMap := map[string]bool{
+		"_id":  true,
+		"-_id": true,
+	}
+	// ensure that sort string is allowed
+	// we are basically concerned about sorting on un-indexed keys
+	if !allowedSortMap[sort] {
+		sort = "-_id" // set it to default sort
+	}
+
+	q := domain.Query{}
+	if lastID != "" && bson.IsObjectIdHex(lastID) {
+		if sort == "_id" {
+			q["_id"] = domain.Query{
+				"$gt": bson.ObjectIdHex(lastID),
+			}
+		} else {
+			q["_id"] = domain.Query{
+				"$lt": bson.ObjectIdHex(lastID),
+			}
+		}
+	}
+
+	if query != "" {
+		if field != "" {
+			q[field] = domain.Query{
+				"$regex":   fmt.Sprintf("^%v.*", query),
+				"$options": "i",
+			}
+		} else {
+			// if not field is specified, we do a text search on pre-defined text index
+			q["$text"] = domain.Query{
+				"$search": query,
+			}
+		}
+	}
+
+	err = repo.DB.FindAll(UsersCollection, q, &users, limit, sort)
+	if err != nil {
+		return domain.Users{}
+	}
+	return users
+}
+
+func (repo *UserRepository) CountUsers(field string, query string) int {
+	q := domain.Query{}
+	if query != "" {
+		if field != "" {
+			q[field] = domain.Query{
+				"$regex":   fmt.Sprintf("^%v.*", query),
+				"$options": "i",
+			}
+		} else {
+			// if not field is specified, we do a text search on pre-defined text index
+			q["$text"] = domain.Query{
+				"$search": query,
+			}
+		}
+	}
+
+	count, err := repo.DB.Count(UsersCollection, q)
+	if err != nil {
+		return 0
+	}
+	return count
 }
 
 // DeleteUsers Delete a list of users
@@ -117,7 +204,6 @@ func (repo *UserRepository) UpdateUser(id string, inUser *domain.User) (*domain.
 	}
 	var changedUser domain.User
 	err := repo.DB.Update(UsersCollection, query, change, &changedUser)
-
 	return &changedUser, err
 }
 

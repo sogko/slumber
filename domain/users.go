@@ -26,7 +26,7 @@ type NewUser struct {
 // User model struct
 // User refers to the REST API user.
 type User struct {
-	ID               bson.ObjectId `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID               bson.ObjectId `json:"id,omitempty" bson:"_id,omitempty"`
 	Username         string        `json:"username,omitempty" bson:"username"`
 	Email            string        `json:"email,omitempty" bson:"email"`
 	Roles            Roles         `json:"roles,omitempty" bson:"roles"`

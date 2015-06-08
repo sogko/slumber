@@ -17,7 +17,7 @@ var SessionsAPIACL = domain.ACLMap{
 		return true
 	},
 	DeleteSession: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-		// enforce authenticated access
-		return (user != nil)
+		// allow anonymous access
+		return true
 	},
 }

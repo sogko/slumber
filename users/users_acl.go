@@ -130,4 +130,20 @@ var UsersAPIACL = domain.ACLMap{
 		// only logged-in admins can update users in batch
 		return true
 	},
+	CountUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+		if user == nil {
+			// enforce authenticated access
+			return false
+		}
+		if user.Status != domain.StatusActive {
+			// must be an active user
+			return false
+		}
+		if !user.HasRole(domain.RoleAdmin) {
+			// must have an admin role
+			return false
+		}
+		// only logged-in admins can update users in batch
+		return true
+	},
 }
