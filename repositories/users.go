@@ -3,7 +3,7 @@ package repositories
 import (
 	"errors"
 	"fmt"
-	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/slumber/domain"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"

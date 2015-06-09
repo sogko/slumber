@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
-	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/slumber/domain"
 	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"testing"

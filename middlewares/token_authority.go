@@ -3,7 +3,7 @@ package middlewares
 import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/slumber/domain"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"time"

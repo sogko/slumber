@@ -2,9 +2,9 @@ package users
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/sogko/golang-rest-api-server-example/controllers"
-	"github.com/sogko/golang-rest-api-server-example/domain"
-	"github.com/sogko/golang-rest-api-server-example/repositories"
+	"github.com/sogko/slumber/controllers"
+	"github.com/sogko/slumber/domain"
+	"github.com/sogko/slumber/repositories"
 	"net/http"
 	"strconv"
 )

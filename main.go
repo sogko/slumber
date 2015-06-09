@@ -3,17 +3,18 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/sogko/golang-rest-api-server-example/libs"
-	"github.com/sogko/golang-rest-api-server-example/middlewares"
-	"github.com/sogko/golang-rest-api-server-example/server"
-	"github.com/sogko/golang-rest-api-server-example/sessions"
-	"github.com/sogko/golang-rest-api-server-example/users"
+	"github.com/sogko/slumber/libs"
+	"github.com/sogko/slumber/middlewares"
+	"github.com/sogko/slumber/server"
+	"github.com/sogko/slumber/sessions"
+	"github.com/sogko/slumber/users"
 	"io/ioutil"
 )
 
 func main() {
 
 	// try to load signing keys for token authority
+	// NOTE: DO NOT USE THESE KEYS FOR PRODUCTION! FOR DEMO ONLY
 	privateSigningKey, err := ioutil.ReadFile("keys/demo.rsa")
 	if err != nil {
 		panic(errors.New(fmt.Sprintf("Error loading private signing key: %v", err.Error())))

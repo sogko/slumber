@@ -3,8 +3,8 @@ package middlewares_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sogko/golang-rest-api-server-example/domain"
-	"github.com/sogko/golang-rest-api-server-example/middlewares"
+	"github.com/sogko/slumber/domain"
+	"github.com/sogko/slumber/middlewares"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 )

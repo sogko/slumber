@@ -1,7 +1,7 @@
 package users
 
 import (
-	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/slumber/domain"
 )
 
 const (

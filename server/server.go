@@ -3,8 +3,8 @@ package server
 import (
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/context"
-	"github.com/sogko/golang-rest-api-server-example/domain"
-	"github.com/sogko/golang-rest-api-server-example/middlewares"
+	"github.com/sogko/slumber/domain"
+	"github.com/sogko/slumber/middlewares"
 	"net/http"
 )
 

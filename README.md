@@ -1,34 +1,51 @@
-golang-rest-api-server-example
+slumber
 ==============================
 
-[![Build Status](https://drone.io/github.com/sogko/golang-rest-api-server-example/status.png)](https://drone.io/github.com/sogko/golang-rest-api-server-example/latest)
+[![Build Status](https://drone.io/github.com/sogko/slumber/status.png)](https://drone.io/github.com/sogko/slumber/latest)
 
-A complete example of a REST-ful API server in Go
+A complete example of a REST-ful API server in written in Go (golang).
 
 ## Features
 - Simple, flexible and testable architecture
   - Light-weight server component
   - Easy to replace components with your own library of choice (router, database driver, etc)
   - Guaranteed thread-safety for each request: uses `gorilla/context` for per-request context
+  - Uses dependency-inversion principle (DI) to reduce complexity and manage package dependencies.
 - Not a framework
   - More like a project to quickly kick-start your own REST API server, customized to your own needs.
+  - Easily extend the project with your own REST resources, in addition to the built-in `users` and `sessions` resources.
 - Each REST resource is a separate package
   - Modular approach
-  - Separation between `model`, `controller` and `data`/`repo` layers
+  - Separation between `model`, `controller` and `data` layers
   - Clear abstraction from `server` package 
+  - Take a look at built-in resources for examples: `users` and `sessions`
+  - More example projects coming soon!
+- Batteries come included
+  - API versioning using using Accept header, for e.g: `Accept=application/json;version=1.0,*/*`
+  - Default resources for `users` and `sessions`
+  - Access control using activity-based access control (ABAC)
+  - Authentication and session management using JWT token
+  - Context middleware using `gorilla/context` for per-request context
+  - JSON response rendering using `unrolled/render`; extensible to XML or other formats for response
+  - MongoDB middleware for database; extensible for other database drivers
 - Highly-testable code base
   - Unit-tested `server`; 100% code coverage
   - Easily test REST resources routes
   - Parallelizable test suite
+  - Uses `ginkgo` for test framework; optional.
 
+## Changelog
+See [CHANGELOG.md](./CHANGELOG.md) for changes
 
 ## Quick start
+To run an instance of a server example:
+
 ```bash
 # get go-package and put it in your go-workspace
-go get github.com/sogko/golang-rest-api-server-example
+go get github.com/sogko/slumber
 
 # go to package root folder
-cd $GOPATH/src/github.com/sogko/golang-rest-api-server-example
+cd $GOPATH/src/github.com/sogko/slumber
 
 # install dependencies
 go get
@@ -87,14 +104,14 @@ $GOPATH/bin/ginkgo watch -r -p -nodes=4
 To generate coverage profile
 
 ```bash
-cd $GOPATH/src/github.com/sogko/golang-rest-api-server-example/server
+cd $GOPATH/src/github.com/sogko/slumber/server
 $GOPATH/bin/ginkgo -cover
 ```
 
 To view coverage
 
 ```bash
-go tool cover -html=$GOPATH/src/github.com/sogko/golang-rest-api-server-example/server/server.coverprofile
+go tool cover -html=$GOPATH/src/github.com/sogko/slumber/server/server.coverprofile
 ```
 
 ## Sessions Management
@@ -117,3 +134,4 @@ $ openssl rsa -in demo.rsa -pubout > demo.rsa.pub
 * [ ] Consolidate util libraries and publish as separate package
 * [x] Abstract away negroni middlewares to a generic http.HandlerFunc
 * [x] Create a REST API server project using this package as a boilerplate without changing this package
+* [] User documentation (create resources routes, ACL, tests, middlewares etc)

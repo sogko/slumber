@@ -1,7 +1,7 @@
 package libs
 
 import (
-	"github.com/sogko/golang-rest-api-server-example/domain"
+	"github.com/sogko/slumber/domain"
 )
 
 // MergeACLMap Returns a new map

@@ -3,7 +3,7 @@ package libs_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sogko/golang-rest-api-server-example/libs"
+	"github.com/sogko/slumber/libs"
 	"net/http/httptest"
 )
 
