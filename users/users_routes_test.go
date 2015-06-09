@@ -844,9 +844,10 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 
 				Context("when PUTing a malformed JSON body", func() {
 
-					var response users.CreateUserResponse_v0
-
 					BeforeEach(func() {
+						user = gory.Build("user").(*domain.User)
+						db.Insert(repositories.UsersCollection, user)
+
 						sendRequestHelper("PUT", fmt.Sprintf("/api/users/%v", user.ID.Hex()), "BADJSON", adminUser, &response)
 					})
 
