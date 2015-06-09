@@ -134,4 +134,4 @@ $ openssl rsa -in demo.rsa -pubout > demo.rsa.pub
 * [ ] Consolidate util libraries and publish as separate package
 * [x] Abstract away negroni middlewares to a generic http.HandlerFunc
 * [x] Create a REST API server project using this package as a boilerplate without changing this package
-* [] User documentation (create resources routes, ACL, tests, middlewares etc)
+* [ ] User documentation (create resources routes, ACL, tests, middlewares etc)

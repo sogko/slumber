@@ -1,4 +1,10 @@
 mode: atomic
+github.com/sogko/slumber/libs/test_helpers.go:12.54,15.16 3 2
+github.com/sogko/slumber/libs/test_helpers.go:18.2,18.40 1 1
+github.com/sogko/slumber/libs/test_helpers.go:15.16,17.3 1 1
+github.com/sogko/slumber/libs/test_helpers.go:24.107,27.16 3 2
+github.com/sogko/slumber/libs/test_helpers.go:30.2,30.12 1 1
+github.com/sogko/slumber/libs/test_helpers.go:27.16,29.3 1 1
 github.com/sogko/slumber/libs/merge_map_structs.go:8.72,10.24 2 3
 github.com/sogko/slumber/libs/merge_map_structs.go:13.2,13.26 1 3
 github.com/sogko/slumber/libs/merge_map_structs.go:16.2,16.12 1 3
@@ -28,9 +34,3 @@ github.com/sogko/slumber/libs/parse_accept_headers.go:90.3,90.36 1 15
 github.com/sogko/slumber/libs/parse_accept_headers.go:83.41,85.18 2 6
 github.com/sogko/slumber/libs/parse_accept_headers.go:88.4,88.28 1 6
 github.com/sogko/slumber/libs/parse_accept_headers.go:85.18,87.5 1 1
-github.com/sogko/slumber/libs/test_helpers.go:12.54,15.16 3 2
-github.com/sogko/slumber/libs/test_helpers.go:18.2,18.40 1 1
-github.com/sogko/slumber/libs/test_helpers.go:15.16,17.3 1 1
-github.com/sogko/slumber/libs/test_helpers.go:24.107,27.16 3 2
-github.com/sogko/slumber/libs/test_helpers.go:30.2,30.12 1 1
-github.com/sogko/slumber/libs/test_helpers.go:27.16,29.3 1 1
