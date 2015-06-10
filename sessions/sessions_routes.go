@@ -11,7 +11,7 @@ const (
 )
 
 // SessionsAPIRoutes Wire API routes to controllers (http.HandlerFunc)
-var SessionsAPIRoutes = domain.Routes{
+var Routes = domain.Routes{
 
 	//------------- API /sessions ---------//
 	domain.Route{

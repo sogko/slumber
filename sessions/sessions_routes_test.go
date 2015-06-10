@@ -9,11 +9,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/libs"
 	"github.com/sogko/slumber/middlewares"
 	"github.com/sogko/slumber/repositories"
 	"github.com/sogko/slumber/server"
 	"github.com/sogko/slumber/sessions"
+	"github.com/sogko/slumber/test_helpers"
 	"net/http"
 	"net/http/httptest"
 	"time"
@@ -67,7 +67,7 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 
 		// serve request
 		s.ServeHTTP(recorder, request)
-		libs.DecodeResponseToType(recorder, &targetResponse)
+		test_helpers.DecodeResponseToType(recorder, &targetResponse)
 	}
 	sendRequestWithTokenHelper := func(recorder *httptest.ResponseRecorder, method string, urlStr string, body interface{}, token string, targetResponse interface{}) {
 
@@ -86,7 +86,7 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 
 		// serve request
 		s.ServeHTTP(recorder, request)
-		libs.DecodeResponseToType(recorder, &targetResponse)
+		test_helpers.DecodeResponseToType(recorder, &targetResponse)
 	}
 	BeforeEach(func() {
 
@@ -108,7 +108,7 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 				PrivateSigningKey: privateSigningKey,
 				PublicSigningKey:  publicSigningKey,
 			},
-			Routes: &sessions.SessionsAPIRoutes,
+			Routes: &sessions.Routes,
 			ACLMap: &sessions.SessionsAPIACL,
 		}).SetupRoutes()
 

@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/sogko/slumber/controllers"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/libs"
+	"github.com/sogko/slumber/test_helpers"
 	"github.com/sogko/slumber/middlewares"
 	"github.com/sogko/slumber/server"
 	"net/http"
@@ -82,7 +82,7 @@ var _ = Describe("Controller helpers", func() {
 			BeforeEach(func() {
 				request, _ = http.NewRequest("POST", "/api/test", bytes.NewReader([]byte("NOT A JSON")))
 				s.ServeHTTP(recorder, request)
-				libs.DecodeResponseToType(recorder, &response)
+				test_helpers.DecodeResponseToType(recorder, &response)
 			})
 
 			It("returns error response", func() {
@@ -95,7 +95,7 @@ var _ = Describe("Controller helpers", func() {
 			BeforeEach(func() {
 				request, _ = http.NewRequest("POST", "/api/test", bytes.NewReader([]byte(`{"a": "OK"}`)))
 				s.ServeHTTP(recorder, request)
-				libs.DecodeResponseToType(recorder, &response)
+				test_helpers.DecodeResponseToType(recorder, &response)
 			})
 
 			It("returns error response", func() {
@@ -113,7 +113,7 @@ var _ = Describe("Controller helpers", func() {
 			BeforeEach(func() {
 				request, _ = http.NewRequest("POST", "/api/test", bytes.NewReader([]byte(`{"a": "ERRORTEST"}`)))
 				s.ServeHTTP(recorder, request)
-				libs.DecodeResponseToType(recorder, &response)
+				test_helpers.DecodeResponseToType(recorder, &response)
 			})
 
 			It("returns error response", func() {

@@ -16,8 +16,8 @@ const (
 	DeleteUser     = "DeleteUser"
 )
 
-// UsersAPIRoutes Wire API routes to controllers (http.HandlerFunc)
-var UsersAPIRoutes = domain.Routes{
+// users.Routes Wire API routes to controllers (http.HandlerFunc)
+var Routes = domain.Routes{
 	domain.Route{
 		Name:           ListUsers,
 		Method:         "GET",

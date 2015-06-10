@@ -1,9 +1,9 @@
-package libs_test
+package test_helpers_test
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sogko/slumber/libs"
+	"github.com/sogko/slumber/test_helpers"
 	"net/http/httptest"
 )
 
@@ -19,7 +19,7 @@ var _ = Describe("Test Helpers", func() {
 					"c": true
 				}
 			`)
-			body := libs.MapFromJSON(data)
+			body := test_helpers.MapFromJSON(data)
 			Expect(body["a"]).To(Equal("isString"))
 			Expect(body["b"]).To(Equal(float64(100)))
 			Expect(body["c"]).To(Equal(true))
@@ -29,7 +29,7 @@ var _ = Describe("Test Helpers", func() {
 		It("should panic if data is an invalid json ", func() {
 			data := []byte("{this is an invalid json}")
 			Expect(func() {
-				_ = libs.MapFromJSON(data)
+				_ = test_helpers.MapFromJSON(data)
 			}).Should(Panic())
 		})
 	})
@@ -55,7 +55,7 @@ var _ = Describe("Test Helpers", func() {
 			recorder.Body.Write(data)
 
 			var responseType TestResponseType
-			libs.DecodeResponseToType(recorder, &responseType)
+			test_helpers.DecodeResponseToType(recorder, &responseType)
 
 			Expect(responseType).To(Equal(TestResponseType{
 				A: "isString",
@@ -72,7 +72,7 @@ var _ = Describe("Test Helpers", func() {
 
 			Expect(func() {
 				var responseType TestResponseType
-				libs.DecodeResponseToType(recorder, &responseType)
+				test_helpers.DecodeResponseToType(recorder, &responseType)
 			}).Should(Panic())
 		})
 	})

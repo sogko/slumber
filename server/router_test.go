@@ -4,9 +4,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/libs"
 	"github.com/sogko/slumber/middlewares"
 	"github.com/sogko/slumber/server"
+	"github.com/sogko/slumber/test_helpers"
 	"net/http"
 	"net/http/httptest"
 )
@@ -76,7 +76,7 @@ var _ = Describe("Router", func() {
 
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				s.ServeHTTP(recorder, request)
-				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
+				bodyJSON = test_helpers.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})
@@ -90,7 +90,7 @@ var _ = Describe("Router", func() {
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "application/json;version=0.1")
 				s.ServeHTTP(recorder, request)
-				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
+				bodyJSON = test_helpers.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string("0.1")))
 			})
@@ -103,7 +103,7 @@ var _ = Describe("Router", func() {
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "application/vnd.api+json;version=0.10")
 				s.ServeHTTP(recorder, request)
-				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
+				bodyJSON = test_helpers.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})
@@ -116,7 +116,7 @@ var _ = Describe("Router", func() {
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "application/json;version=0.10")
 				s.ServeHTTP(recorder, request)
-				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
+				bodyJSON = test_helpers.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})
@@ -129,7 +129,7 @@ var _ = Describe("Router", func() {
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "application/json")
 				s.ServeHTTP(recorder, request)
-				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
+				bodyJSON = test_helpers.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})
@@ -142,7 +142,7 @@ var _ = Describe("Router", func() {
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				request.Header.Set("Accept", "")
 				s.ServeHTTP(recorder, request)
-				bodyJSON = libs.MapFromJSON(recorder.Body.Bytes())
+				bodyJSON = test_helpers.MapFromJSON(recorder.Body.Bytes())
 
 				Expect(bodyJSON["version"]).To(Equal(string(route.DefaultVersion)))
 			})

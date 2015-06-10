@@ -1,4 +1,4 @@
-package libs
+package test_helpers
 
 import (
 	"encoding/json"
