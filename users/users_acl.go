@@ -8,84 +8,84 @@ import (
 )
 
 var UsersAPIACL = domain.ACLMap{
-	ListUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	ListUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		if user == nil {
 			// enforce authenticated access
-			return false
+			return false, ""
 		}
 		if user.Status != domain.StatusActive {
 			// must be an active user
-			return false
+			return false, ""
 		}
-		return true
+		return true, ""
 	},
-	GetUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	GetUser: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		if user == nil {
 			// enforce authenticated access
-			return false
+			return false, ""
 		}
 		if user.Status != domain.StatusActive {
 			// must be an active user
-			return false
+			return false, ""
 		}
-		return true
+		return true, ""
 	},
-	CreateUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	CreateUser: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		// allow anonymous to create a user account
 		// if authenticated, only admin can create new users
 		// no point for non-admin to create new users
 		// TODO: only allow authorized but unauthenticated client
 		if user == nil {
 			// enforce authenticated access
-			return true
+			return true, ""
 		}
 		if user.Status != domain.StatusActive {
 			// must be an active user
-			return false
+			return false, ""
 		}
 		if !user.HasRole(domain.RoleAdmin) {
 			// must have an admin role
-			return false
+			return false, ""
 		}
-		return true
+		return true, ""
 	},
-	UpdateUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	UpdateUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		if user == nil {
 			// enforce authenticated access
-			return false
+			return false, ""
 		}
 		if user.Status != domain.StatusActive {
 			// must be an active user
-			return false
+			return false, ""
 		}
 		if !user.HasRole(domain.RoleAdmin) {
 			// must have an admin role
-			return false
+			return false, ""
 		}
 		// only logged-in admins can update users in batch
-		return true
+		return true, ""
 	},
-	DeleteAllUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	DeleteAllUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		if user == nil {
 			// enforce authenticated access
-			return false
+			return false, ""
 		}
 		if user.Status != domain.StatusActive {
 			// must be an active user
-			return false
+			return false, ""
 		}
 		if !user.HasRole(domain.RoleAdmin) {
 			// must have an admin role
-			return false
+			return false, ""
 		}
 		// only logged-in admins can update users in batch
-		return true
+		return true, ""
 	},
-	ConfirmUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	ConfirmUser: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		// allow anonymous access. user is expected to specify `code`
-		return true
+		return true, ""
 	},
-	UpdateUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	UpdateUser: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		params := mux.Vars(req)
 		id := params["id"]
 		db := ctx.GetDbCtx(req)
@@ -93,57 +93,57 @@ var UsersAPIACL = domain.ACLMap{
 
 		if user == nil {
 			// enforce authenticated access
-			return false
+			return false, ""
 		}
 		if user.Status != domain.StatusActive {
 			// must be an active user
-			return false
+			return false, ""
 		}
 		if user.HasRole(domain.RoleAdmin) {
 			// must have an admin role
-			return true
+			return true, ""
 		}
 
 		// retrieve target user
 		userTarget, _ := repo.GetUserById(id)
 		if userTarget != nil && user.ID == userTarget.ID {
 			// this is his own account
-			return true
+			return true, ""
 		}
 		// a user can only `update` its own user account or if user is an admin
-		return false
+		return false, ""
 	},
-	DeleteUser: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	DeleteUser: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		// only an admin can `delete` a user account
 		if user == nil {
 			// enforce authenticated access
-			return false
+			return false, ""
 		}
 		if user.Status != domain.StatusActive {
 			// must be an active user
-			return false
+			return false, ""
 		}
 		if !user.HasRole(domain.RoleAdmin) {
 			// must have an admin role
-			return false
+			return false, ""
 		}
 		// only logged-in admins can update users in batch
-		return true
+		return true, ""
 	},
-	CountUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	CountUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		if user == nil {
 			// enforce authenticated access
-			return false
+			return false, ""
 		}
 		if user.Status != domain.StatusActive {
 			// must be an active user
-			return false
+			return false, ""
 		}
 		if !user.HasRole(domain.RoleAdmin) {
 			// must have an admin role
-			return false
+			return false, ""
 		}
 		// only logged-in admins can update users in batch
-		return true
+		return true, ""
 	},
 }

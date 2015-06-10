@@ -56,6 +56,7 @@ type GetUserResponse_v0 struct {
 	Message string      `json:"message,omitempty"`
 	Success bool        `json:"success"`
 }
+
 type UpdateUserRequest_v0 struct {
 	User domain.User `json:"user"`
 }
@@ -211,7 +212,18 @@ func HandleCreateUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.IC
 		return
 	}
 
-	// TODO: send email / message with email confirmation code
+	// run a post-create hook
+	// example of a post-create hook: send email / message with confirmation link
+	hooks := ctx.GetControllerHooksMapCtx(req)
+	if hooks.PostCreateUserHook != nil {
+		err = hooks.PostCreateUserHook(w, req, ctx, &domain.PostCreateUserHookPayload{
+			User: &newUser,
+		})
+		if err != nil {
+			controllers.RenderErrorResponseHelper(w, req, r, err.Error())
+			return
+		}
+	}
 
 	r.JSON(w, http.StatusCreated, CreateUserResponse_v0{
 		User:    newUser,
@@ -258,7 +270,7 @@ func HandleConfirmUser_v0(w http.ResponseWriter, req *http.Request, ctx domain.I
 	// run a post-confirmation hook
 	hooks := ctx.GetControllerHooksMapCtx(req)
 	if hooks.PostConfirmUserHook != nil {
-		err = hooks.PostConfirmUserHook(w, req, ctx, &domain.PostUserConfirmationHookPayload{
+		err = hooks.PostConfirmUserHook(w, req, ctx, &domain.PostConfirmUserHookPayload{
 			User: user,
 		})
 		if err != nil {

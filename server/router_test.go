@@ -49,8 +49,8 @@ var _ = Describe("Router", func() {
 	}
 
 	aclMap = domain.ACLMap{
-		"Test": func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-			return (true)
+		"Test": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+			return true, ""
 		},
 	}
 

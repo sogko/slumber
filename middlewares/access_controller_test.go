@@ -41,11 +41,11 @@ var _ = Describe("AccessController", func() {
 
 		// create test ACL Map
 		aclMap = domain.ACLMap{
-			"ListUsers": func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+			"ListUsers": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 				// does not require special privileges
-				return true
+				return true, ""
 			},
-			"EditUser": func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+			"EditUser": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 				// This is an example of determining access to current resource by storing/retrieving
 				// contextual data from IContext
 				// In practical use, the handler might use route params (for eg /api/users/{id})
@@ -55,7 +55,7 @@ var _ = Describe("AccessController", func() {
 					currObj = &domain.User{}
 				}
 				userObj := currObj.(*domain.User)
-				return user.HasRole(domain.RoleAdmin) || user.ID == userObj.ID
+				return user.HasRole(domain.RoleAdmin) || user.ID == userObj.ID, ""
 			},
 		}
 
@@ -89,8 +89,8 @@ var _ = Describe("AccessController", func() {
 		})
 		Context("when it already have something", func() {
 			BeforeEach(func() {
-				stub := func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-					return true
+				stub := func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+					return true, ""
 				}
 				ac.Add(&domain.ACLMap{
 					"ListAdmins": stub,
@@ -133,25 +133,29 @@ var _ = Describe("AccessController", func() {
 		Context("when user is authorized (an admin)", func() {
 			It("return OK", func() {
 				ctx.SetCurrentObjectCtx(request, normalUser)
-				Expect(ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", adminUser)).To(BeTrue())
+				result, _ := ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", adminUser)
+				Expect(result).To(BeTrue())
 			})
 		})
 		Context("when user is authorized (owns `user` resource)", func() {
 			It("return OK", func() {
 				ctx.SetCurrentObjectCtx(request, normalUser)
-				Expect(ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", normalUser)).To(BeTrue())
+				result, _ := ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", normalUser)
+				Expect(result).To(BeTrue())
 			})
 		})
 		Context("when user is not authorized", func() {
 			It("return not OK", func() {
 				ctx.SetCurrentObjectCtx(request, anotherNormalUser)
-				Expect(ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", normalUser)).To(BeFalse())
+				result, _ := ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", normalUser)
+				Expect(result).To(BeFalse())
 			})
 		})
 		Context("when action does not exists", func() {
 			It("return not OK", func() {
 				ctx.SetCurrentObjectCtx(request, normalUser)
-				Expect(ac.IsHTTPRequestAuthorized(request, ctx, "NonExistent", normalUser)).To(BeFalse())
+				result, _ := ac.IsHTTPRequestAuthorized(request, ctx, "NonExistent", normalUser)
+				Expect(result).To(BeFalse())
 			})
 		})
 	})

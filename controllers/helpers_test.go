@@ -65,8 +65,8 @@ var _ = Describe("Controller helpers", func() {
 			Renderer: &middlewares.RendererOptions{},
 			Routes:   &domain.Routes{route},
 			ACLMap: &domain.ACLMap{
-				"Test": func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-					return (true)
+				"Test": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+					return true, ""
 				},
 			},
 		}).SetupRoutes()

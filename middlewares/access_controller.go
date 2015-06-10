@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+const defaultForbiddenAccessMessage = "Forbidden (403)"
+
 // TODO: Currently, AccessController only acts as a gateway for endpoints on router level. Build AC to handler other aspects of ACL
 func NewAccessController() *AccessController {
 	ac := AccessController{}
@@ -28,13 +30,18 @@ func (ac *AccessController) HasAction(action string) bool {
 	return (fn != nil)
 }
 
-func (ac *AccessController) IsHTTPRequestAuthorized(req *http.Request, ctx domain.IContext, action string, user *domain.User) bool {
+func (ac *AccessController) IsHTTPRequestAuthorized(req *http.Request, ctx domain.IContext, action string, user *domain.User) (bool, string) {
 	fn := ac.ACLMap[action]
 	if fn == nil {
 		// by default, if acl action/handler is not defined, request is not authorized
-		return false
+		return false, defaultForbiddenAccessMessage
 	}
-	return fn(user, req, ctx)
+
+	result, message := fn(user, req, ctx)
+	if message == "" {
+		message = defaultForbiddenAccessMessage
+	}
+	return result, message
 }
 
 func (ac *AccessController) Handler(action string, handler domain.ContextHandlerFunc) domain.ContextHandlerFunc {
@@ -45,9 +52,10 @@ func (ac *AccessController) Handler(action string, handler domain.ContextHandler
 		// `user` might be `nil` if has not authenticated.
 		// ACL might want to allow anonymous / non-authenticated access (for login, e.g)
 
-		if !ac.IsHTTPRequestAuthorized(req, ctx, action, user) {
+		result, message := ac.IsHTTPRequestAuthorized(req, ctx, action, user)
+		if !result {
 			r.JSON(w, http.StatusForbidden, controllers.ErrorResponse_v0{
-				Message: "Forbidden (403)",
+				Message: message,
 				Success: false,
 			})
 			return

@@ -6,12 +6,17 @@ import (
 
 type ControllerHook func(w http.ResponseWriter, req *http.Request, ctx IContext, payload interface{}) error
 type ControllerHooksMap struct {
+	PostCreateUserHook    ControllerHook
 	PostConfirmUserHook   ControllerHook
 	PostCreateSessionHook ControllerHook
 	PostDeleteSessionHook ControllerHook
 }
 
-type PostUserConfirmationHookPayload struct {
+type PostCreateUserHookPayload struct {
+	User *User
+}
+
+type PostConfirmUserHookPayload struct {
 	User *User
 }
 

@@ -6,18 +6,18 @@ import (
 )
 
 var SessionsAPIACL = domain.ACLMap{
-	GetSession: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	GetSession: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		if user == nil {
-			return false
+			return false, ""
 		}
-		return true
+		return true, ""
 	},
-	CreateSession: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	CreateSession: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		// allow anonymous access
-		return true
+		return true, ""
 	},
-	DeleteSession: func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
+	DeleteSession: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		// allow anonymous access
-		return true
+		return true, ""
 	},
 }

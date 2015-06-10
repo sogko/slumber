@@ -11,8 +11,8 @@ import (
 var _ = Describe("Merge Map Structs Tests", func() {
 
 	Describe("MergeACLMap()", func() {
-		stub := func(user *domain.User, req *http.Request, ctx domain.IContext) bool {
-			return true
+		stub := func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+			return true, ""
 		}
 		firstMap := domain.ACLMap{
 			"first": stub,
