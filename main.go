@@ -27,7 +27,7 @@ func main() {
 	routes := users.Routes.Append(&sessions.Routes)
 
 	// load ACL map
-	aclMap := users.UsersAPIACL.Append(&sessions.SessionsAPIACL)
+	aclMap := users.ACL.Append(&sessions.ACL)
 
 	// set server configuration
 	config := server.Config{

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-var UsersAPIACL = domain.ACLMap{
+var ACL = domain.ACLMap{
 	ListUsers: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		if user == nil {
 			// enforce authenticated access

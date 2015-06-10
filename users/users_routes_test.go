@@ -90,7 +90,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				PublicSigningKey:  publicSigningKey,
 			},
 			Routes: &users.Routes,
-			ACLMap: &users.UsersAPIACL,
+			ACLMap: &users.ACL,
 		}).SetupRoutes()
 
 		// record HTTP responses

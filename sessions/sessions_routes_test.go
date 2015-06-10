@@ -109,7 +109,7 @@ var _ = Describe("Sessions API - /api/sessions; version=0.0", func() {
 				PublicSigningKey:  publicSigningKey,
 			},
 			Routes: &sessions.Routes,
-			ACLMap: &sessions.SessionsAPIACL,
+			ACLMap: &sessions.ACL,
 		}).SetupRoutes()
 
 		// record HTTP responses

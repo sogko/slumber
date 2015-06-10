@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-var SessionsAPIACL = domain.ACLMap{
+var ACL = domain.ACLMap{
 	GetSession: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
 		if user == nil {
 			return false, ""
