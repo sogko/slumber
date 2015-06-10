@@ -1,5 +1,8 @@
-slumber
-==============================
+<div class="vicinity rich-diff-level-zero">
+<a href="https://github.com/sogko/slumber"><img alt="slumber" src="http://i.imgur.com/LmiexWx.png" align="left" height="120"/></a>
+</div>
+
+-------
 
 [![Build Status](https://drone.io/github.com/sogko/slumber/status.png)](https://drone.io/github.com/sogko/slumber/latest)
 
@@ -120,6 +123,9 @@ To generate key pair for signing JWT claims
 $ openssl genrsa -out demo.rsa 1024 # the 1024 is the size of the key we are generating
 $ openssl rsa -in demo.rsa -pubout > demo.rsa.pub 
 ```
+
+## Architecture
+<a href="http://i.imgur.com/HwIhPz7.png"><img src="http://i.imgur.com/HwIhPz7.png"/ height="750"/></a>
 
 ## TODO
 * [x] API versioning using Accept header, for e.g: `Accept=application/json;version=1.0,*/*`
