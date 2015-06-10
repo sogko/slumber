@@ -3,7 +3,6 @@ package middlewares
 import (
 	"github.com/sogko/slumber/controllers"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/libs"
 	"net/http"
 )
 
@@ -21,8 +20,8 @@ type AccessController struct {
 	ACLMap domain.ACLMap
 }
 
-func (ac *AccessController) Add(_aclMap *domain.ACLMap) {
-	ac.ACLMap = libs.MergeACLMap(&ac.ACLMap, _aclMap)
+func (ac *AccessController) Add(aclMap *domain.ACLMap) {
+	ac.ACLMap = ac.ACLMap.Append(aclMap)
 }
 
 func (ac *AccessController) HasAction(action string) bool {

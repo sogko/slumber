@@ -1,0 +1,7 @@
+mode: atomic
+github.com/sogko/slumber/test_helpers/test_helpers.go:12.54,15.16 3 2
+github.com/sogko/slumber/test_helpers/test_helpers.go:18.2,18.40 1 1
+github.com/sogko/slumber/test_helpers/test_helpers.go:15.16,17.3 1 1
+github.com/sogko/slumber/test_helpers/test_helpers.go:24.107,27.16 3 2
+github.com/sogko/slumber/test_helpers/test_helpers.go:30.2,30.12 1 1
+github.com/sogko/slumber/test_helpers/test_helpers.go:27.16,29.3 1 1

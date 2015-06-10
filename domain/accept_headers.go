@@ -1,4 +1,4 @@
-package libs
+package domain
 
 import (
 	"regexp"
@@ -25,7 +25,7 @@ type AcceptHeaders []AcceptHeader
 // mediaTypeRegExp match ((type)/(subtype)((+)(suffix))?)
 var mediaTypeRegExp = regexp.MustCompile(`^([\w\*\-]+)\/([\w\*\.\-]+)((\+)(\w+))?`)
 
-func ParseAcceptHeaders(str string) AcceptHeaders {
+func NewAcceptHeadersFromString(str string) AcceptHeaders {
 
 	var headers AcceptHeaders
 

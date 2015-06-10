@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/sogko/slumber/libs"
 	"github.com/sogko/slumber/middlewares"
 	"github.com/sogko/slumber/server"
 	"github.com/sogko/slumber/sessions"
@@ -25,12 +24,10 @@ func main() {
 	}
 
 	// load routes
-	routes := users.UsersAPIRoutes
-	routes = libs.MergeRoutes(&routes, &sessions.SessionsAPIRoutes)
+	routes := users.Routes.Append(&sessions.Routes)
 
 	// load ACL map
-	aclMap := users.UsersAPIACL
-	aclMap = libs.MergeACLMap(&aclMap, &sessions.SessionsAPIACL)
+	aclMap := users.UsersAPIACL.Append(&sessions.SessionsAPIACL)
 
 	// set server configuration
 	config := server.Config{

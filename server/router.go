@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/libs"
 	"net/http"
 )
 
@@ -18,7 +17,7 @@ type Router struct {
 // TODO: refactor matcher function as server.Config
 func matcherFunc(r domain.Route, defaultHandler domain.ContextHandlerFunc, ctx domain.IContext, ac domain.IAccessController) func(r *http.Request, rm *mux.RouteMatch) bool {
 	return func(req *http.Request, rm *mux.RouteMatch) bool {
-		acceptHeaders := libs.ParseAcceptHeaders(req.Header.Get("accept"))
+		acceptHeaders := domain.NewAcceptHeadersFromString(req.Header.Get("accept"))
 		foundHandler := defaultHandler
 		// try to match a handler to the specified `version` params
 		// else we will fall back to the default handler

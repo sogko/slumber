@@ -1,4 +1,4 @@
-package libs_test
+package domain_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestUtils(t *testing.T) {
+func TestDomain(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Libs Suite")
+	RunSpecs(t, "Domain Suite")
 }

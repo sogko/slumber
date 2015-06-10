@@ -1,4 +1,9 @@
 mode: atomic
+github.com/sogko/slumber/sessions/sessions_acl.go:9.93,10.18 1 4
+github.com/sogko/slumber/sessions/sessions_acl.go:13.3,13.18 1 2
+github.com/sogko/slumber/sessions/sessions_acl.go:10.18,12.4 1 2
+github.com/sogko/slumber/sessions/sessions_acl.go:15.96,18.3 1 10
+github.com/sogko/slumber/sessions/sessions_acl.go:19.96,22.3 1 6
 github.com/sogko/slumber/sessions/sessions_controllers.go:32.89,41.2 3 2
 github.com/sogko/slumber/sessions/sessions_controllers.go:44.92,51.16 6 10
 github.com/sogko/slumber/sessions/sessions_controllers.go:55.2,55.25 1 8
@@ -27,8 +32,3 @@ github.com/sogko/slumber/sessions/sessions_controllers.go:122.18,125.5 2 0
 github.com/sogko/slumber/sessions/sessions_controllers.go:139.16,141.3 1 0
 github.com/sogko/slumber/sessions/sessions_controllers.go:144.40,148.17 2 0
 github.com/sogko/slumber/sessions/sessions_controllers.go:148.17,151.4 2 0
-github.com/sogko/slumber/sessions/sessions_acl.go:9.83,10.18 1 4
-github.com/sogko/slumber/sessions/sessions_acl.go:13.3,13.14 1 2
-github.com/sogko/slumber/sessions/sessions_acl.go:10.18,12.4 1 2
-github.com/sogko/slumber/sessions/sessions_acl.go:15.86,18.3 1 10
-github.com/sogko/slumber/sessions/sessions_acl.go:19.86,22.3 1 6

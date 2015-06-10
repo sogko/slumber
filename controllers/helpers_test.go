@@ -6,9 +6,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/sogko/slumber/controllers"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/test_helpers"
 	"github.com/sogko/slumber/middlewares"
 	"github.com/sogko/slumber/server"
+	"github.com/sogko/slumber/test_helpers"
 	"net/http"
 	"net/http/httptest"
 )
