@@ -1,10 +1,10 @@
-<div class="vicinity rich-diff-level-zero">
-<a href="https://github.com/sogko/slumber"><img alt="slumber" src="http://i.imgur.com/LmiexWx.png" align="left" height="120"/></a>
+
+<a href="https://github.com/sogko/slumber">
+<img alt="slumber" src="http://i.imgur.com/LmiexWx.png" align="left" height="130"/></a>
 </div>
 
--------
-
 [![Build Status](https://drone.io/github.com/sogko/slumber/status.png)](https://drone.io/github.com/sogko/slumber/latest)
+[![Coverage Status](https://coveralls.io/repos/sogko/slumber/badge.svg?branch=master)](https://coveralls.io/r/sogko/slumber?branch=master)
 
 A complete example of a REST-ful API server in written in Go (golang).
 
