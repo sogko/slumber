@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestUtils(t *testing.T) {
+func TestTestHelpers(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Test Helpers Suite")
 }
