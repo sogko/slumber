@@ -7,6 +7,7 @@ import (
 	"github.com/sogko/slumber/middlewares"
 	"github.com/sogko/slumber/server"
 	"net/http"
+	"time"
 )
 
 var _ = Describe("Server", func() {
@@ -40,6 +41,9 @@ var _ = Describe("Server", func() {
 			Routes:         routes,
 			TokenAuthority: &middlewares.TokenAuthorityOptions{},
 		}).SetupRoutes()
+		go s.Run(":8001", 1*time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
+		s.Stop()
 	})
 
 	Describe("Bad database server config", func() {

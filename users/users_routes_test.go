@@ -1,8 +1,7 @@
 package users_test
 
 import (
-	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/modocache/gory"
 	. "github.com/onsi/ginkgo"
@@ -11,7 +10,7 @@ import (
 	"github.com/sogko/slumber/middlewares"
 	"github.com/sogko/slumber/repositories"
 	"github.com/sogko/slumber/server"
-	"github.com/sogko/slumber/test_helpers"
+	th "github.com/sogko/slumber/test_helpers"
 	"github.com/sogko/slumber/users"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
@@ -23,84 +22,86 @@ const RequestAcceptHeader = "application/json;version=0.0"
 
 var _ = Describe("Users API - /api/users; version=0.0", func() {
 
-	var s *server.Server
+	var ts *th.TestServer
+	var ts2 *th.TestServer
 	var db domain.IDatabase
-	var ta domain.ITokenAuthority
-	var request *http.Request
 	var recorder *httptest.ResponseRecorder
 
-	// sendRequestHelper helps
-	// - creates an HTTP request
-	// - set the right API version
-	// - serves request
-	// - decode the response into the desired interfac
-	sendRequestHelper := func(method string, urlStr string, body interface{}, apiUser *domain.User, targetResponse interface{}) {
-
-		// request for version 0.0
-		if body != nil {
-			jsonBytes, _ := json.Marshal(body)
-			request, _ = http.NewRequest(method, urlStr, bytes.NewReader(jsonBytes))
-		} else {
-			request, _ = http.NewRequest(method, urlStr, nil)
-		}
-
-		// set API version through accept header
-		request.Header.Set("Accept", RequestAcceptHeader)
-
-		if apiUser != nil {
-			// set Authorization header
-			// TODO: create utility
-			var rolesString []string
-			for _, role := range apiUser.Roles {
-				rolesString = append(rolesString, string(role))
+	stubControllerHook := func(name string, doControllerHooksSuccess bool) func(w http.ResponseWriter, req *http.Request, ctx domain.IContext, payload interface{}) error {
+		return func(w http.ResponseWriter, req *http.Request, ctx domain.IContext, payload interface{}) error {
+			if payload == nil {
+				return errors.New("Missing payload")
 			}
-			token, _ := ta.CreateNewSessionToken(&domain.TokenClaims{
-				UserID:   apiUser.ID.Hex(),
-				Username: apiUser.Username,
-				Status:   apiUser.Status,
-				Roles:    rolesString,
-			})
-			request.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
+			if !doControllerHooksSuccess {
+				return errors.New("Expected hook to failed")
+			}
+			return nil
 		}
-
-		// serve request
-		s.ServeHTTP(recorder, request)
-		test_helpers.DecodeResponseToType(recorder, &targetResponse)
 	}
 
 	BeforeEach(func() {
 
-		dbOptions := middlewares.MongoDBOptions{
-			ServerName:   TestDatabaseServerName,
-			DatabaseName: TestDatabaseName,
-		}
-
-		// create a separate db session so we can drop db later
-		db = middlewares.NewMongoDB(&dbOptions)
-		_ = db.NewSession()
-
-		// init server
-		s = server.NewServer(&server.Config{
-			Database: &dbOptions,
-			Renderer: &middlewares.RendererOptions{
-				IndentJSON: true,
+		// create test server
+		ts = th.NewTestServer(&th.TestServerOptions{
+			RequestAcceptHeader: RequestAcceptHeader,
+			ServerConfig: &server.Config{
+				Database: &middlewares.MongoDBOptions{
+					ServerName:   TestDatabaseServerName,
+					DatabaseName: TestDatabaseName,
+				},
+				Renderer: &middlewares.RendererOptions{
+					IndentJSON: true,
+				},
+				TokenAuthority: &middlewares.TokenAuthorityOptions{
+					PrivateSigningKey: privateSigningKey,
+					PublicSigningKey:  publicSigningKey,
+				},
+				Routes: &users.Routes,
+				ACLMap: &users.ACL,
+				ControllerHooks: &domain.ControllerHooksMap{
+					PostCreateUserHook:  stubControllerHook("PostCreateUserHook", true),
+					PostConfirmUserHook: stubControllerHook("PostConfirmUserHook", true),
+				},
 			},
-			TokenAuthority: &middlewares.TokenAuthorityOptions{
-				PrivateSigningKey: privateSigningKey,
-				PublicSigningKey:  publicSigningKey,
-			},
-			Routes: &users.Routes,
-			ACLMap: &users.ACL,
-		}).SetupRoutes()
-
-		// record HTTP responses
-		recorder = httptest.NewRecorder()
-
-		// setup token authority
-		ta = middlewares.NewTokenAuthority(&middlewares.TokenAuthorityOptions{
 			PrivateSigningKey: privateSigningKey,
 			PublicSigningKey:  publicSigningKey,
 		})
+
+		// create another test server to test failed cases for controller hooks
+		ts2 = th.NewTestServer(&th.TestServerOptions{
+			RequestAcceptHeader: RequestAcceptHeader,
+			ServerConfig: &server.Config{
+				Database: &middlewares.MongoDBOptions{
+					ServerName:   TestDatabaseServerName,
+					DatabaseName: TestDatabaseName,
+				},
+				Renderer: &middlewares.RendererOptions{
+					IndentJSON: true,
+				},
+				TokenAuthority: &middlewares.TokenAuthorityOptions{
+					PrivateSigningKey: privateSigningKey,
+					PublicSigningKey:  publicSigningKey,
+				},
+				Routes: &users.Routes,
+				ACLMap: &users.ACL,
+				ControllerHooks: &domain.ControllerHooksMap{
+					PostCreateUserHook:  stubControllerHook("PostCreateUserHook", false),
+					PostConfirmUserHook: stubControllerHook("PostConfirmUserHook", false),
+				},
+			},
+			PrivateSigningKey: privateSigningKey,
+			PublicSigningKey:  publicSigningKey,
+		})
+
+		// create a separate db session so we can drop db later
+		db = middlewares.NewMongoDB(&middlewares.MongoDBOptions{
+			ServerName:   TestDatabaseServerName,
+			DatabaseName: TestDatabaseName,
+		})
+		_ = db.NewSession()
+
+		// record HTTP responses
+		recorder = httptest.NewRecorder()
 	})
 
 	AfterEach(func() {
@@ -123,7 +124,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				var response users.ListUsersResponse_v0
 
 				BeforeEach(func() {
-					sendRequestHelper("GET", "/api/users", nil, adminUser, &response)
+					ts.Request(recorder, "GET", "/api/users", nil, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusOK (200)", func() {
@@ -144,7 +145,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					db.Insert(repositories.UsersCollection, gory.Build("user"))
 					db.Insert(repositories.UsersCollection, gory.Build("user"))
 
-					sendRequestHelper("GET", "/api/users", nil, adminUser, &response)
+					ts.Request(recorder, "GET", "/api/users", nil, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusOK (200)", func() {
@@ -162,7 +163,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 
 			var response users.ListUsersResponse_v0
 			It("returns status code of StatusOK (200)", func() {
-				sendRequestHelper("GET", "/api/users", nil, nil, &response)
+				ts.Request(recorder, "GET", "/api/users", nil, &response, nil)
 				Expect(recorder.Code).To(Equal(http.StatusForbidden))
 			})
 		})
@@ -177,7 +178,98 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 			})
 			var response users.ListUsersResponse_v0
 			It("returns status code of StatusOK (200)", func() {
-				sendRequestHelper("GET", "/api/users", nil, inactiveAdminUser, &response)
+				ts.Request(recorder, "GET", "/api/users", nil, &response, &th.AuthOptions{APIUser: inactiveAdminUser})
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+	})
+
+	Describe("GET /api/users/count", func() {
+
+		Context("when API user is an active admin", func() {
+			var adminUser *domain.User
+
+			BeforeEach(func() {
+				adminUser = gory.Build("adminAPIUser").(*domain.User)
+				db.Insert(repositories.UsersCollection, adminUser)
+			})
+
+			Context("when no users exist", func() {
+
+				var response users.CountUsersResponse_v0
+
+				BeforeEach(func() {
+					ts.Request(recorder, "GET", "/api/users/count", nil, &response, &th.AuthOptions{APIUser: adminUser})
+				})
+
+				It("returns status code of StatusOK (200)", func() {
+					Expect(recorder.Code).To(Equal(http.StatusOK))
+				})
+				It("returns zero users", func() {
+					Expect(response.Count).To(Equal(1))
+					Expect(response.Success).To(Equal(true))
+				})
+			})
+
+			Context("when two users exist", func() {
+
+				var response users.CountUsersResponse_v0
+
+				BeforeEach(func() {
+					// insert two valid users into database
+					db.Insert(repositories.UsersCollection, gory.Build("user"))
+					db.Insert(repositories.UsersCollection, gory.Build("user"))
+
+					ts.Request(recorder, "GET", "/api/users/count", nil, &response, &th.AuthOptions{APIUser: adminUser})
+				})
+
+				It("returns status code of StatusOK (200)", func() {
+					Expect(recorder.Code).To(Equal(http.StatusOK))
+				})
+				It("returns two users", func() {
+					Expect(response.Count).To(Equal(3))
+					Expect(response.Success).To(Equal(true))
+				})
+
+			})
+		})
+
+		Context("when API user is anonymous", func() {
+
+			var response users.CountUsersResponse_v0
+			It("returns status code of StatusOK (200)", func() {
+				ts.Request(recorder, "GET", "/api/users/count", nil, &response, nil)
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an active user", func() {
+
+			var activeUser *domain.User
+			var response users.CountUsersResponse_v0
+
+			BeforeEach(func() {
+				activeUser = gory.Build("user").(*domain.User)
+				db.Insert(repositories.UsersCollection, activeUser)
+				ts.Request(recorder, "GET", "/api/users/count", nil, &response, &th.AuthOptions{APIUser: activeUser})
+			})
+
+			It("returns status code of StatusForbidden (403)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an inactive admin", func() {
+
+			var inactiveAdminUser *domain.User
+
+			BeforeEach(func() {
+				inactiveAdminUser = gory.Build("inactiveAdminAPIUser").(*domain.User)
+				db.Insert(repositories.UsersCollection, inactiveAdminUser)
+			})
+			var response users.CountUsersResponse_v0
+			It("returns status code of StatusOK (200)", func() {
+				ts.Request(recorder, "GET", "/api/users/count", nil, &response, &th.AuthOptions{APIUser: inactiveAdminUser})
 				Expect(recorder.Code).To(Equal(http.StatusForbidden))
 			})
 		})
@@ -194,28 +286,39 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 			})
 
 			Context("when adding one valid users", func() {
+				Context("when PostCreateUserHook returns OK", func() {
+					It("returns newly-created user", func() {
 
-				var newUser *domain.NewUser
-				var response users.CreateUserResponse_v0
+						var newUser *domain.NewUser
+						var response users.CreateUserResponse_v0
 
-				BeforeEach(func() {
+						newUser = gory.Build("newUser").(*domain.NewUser)
 
-					newUser = gory.Build("newUser").(*domain.NewUser)
+						ts.Request(recorder, "POST", "/api/users", users.CreateUserRequest_v0{
+							User: *newUser,
+						}, &response, &th.AuthOptions{APIUser: adminUser})
 
-					sendRequestHelper("POST", "/api/users", users.CreateUserRequest_v0{
-						User: *newUser,
-					}, adminUser, &response)
-
+						Expect(recorder.Code).To(Equal(http.StatusCreated))
+						Expect(response.User.Email).To(Equal(newUser.Email))
+						Expect(response.User.Roles).To(BeNil())
+						Expect(response.User.Status).To(Equal(domain.StatusPending))
+						Expect(response.Success).To(Equal(true))
+					})
 				})
+				Context("when PostCreateUserHook failed", func() {
 
-				It("returns status code of StatusCreated (201)", func() {
-					Expect(recorder.Code).To(Equal(http.StatusCreated))
-				})
-				It("returns newly-created user", func() {
-					Expect(response.User.Email).To(Equal(newUser.Email))
-					Expect(response.User.Roles).To(BeNil())
-					Expect(response.User.Status).To(Equal(domain.StatusPending))
-					Expect(response.Success).To(Equal(true))
+					It("returns status code of StatusBadRequest (400)", func() {
+						var newUser *domain.NewUser
+						var response users.CreateUserResponse_v0
+
+						newUser = gory.Build("newUser").(*domain.NewUser)
+
+						ts2.Request(recorder, "POST", "/api/users", users.CreateUserRequest_v0{
+							User: *newUser,
+						}, &response, &th.AuthOptions{APIUser: adminUser})
+
+						Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+					})
 				})
 			})
 
@@ -227,9 +330,9 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				BeforeEach(func() {
 
 					newUser = gory.Build("newUser").(*domain.NewUser)
-					sendRequestHelper("POST", "/api/users", users.CreateUserRequest_v0{
+					ts.Request(recorder, "POST", "/api/users", users.CreateUserRequest_v0{
 						User: *newUser,
-					}, adminUser, &response)
+					}, &response, &th.AuthOptions{APIUser: adminUser})
 
 				})
 
@@ -249,7 +352,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				var response users.CreateUserResponse_v0
 
 				BeforeEach(func() {
-					sendRequestHelper("POST", "/api/users", "BADJSON", adminUser, &response)
+					ts.Request(recorder, "POST", "/api/users", "BADJSON", &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusBadRequest (400)", func() {
@@ -269,9 +372,51 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				BeforeEach(func() {
 
 					newUser = gory.Build("newUserInvalidEmail").(*domain.NewUser)
-					sendRequestHelper("POST", "/api/users", users.CreateUserRequest_v0{
+					ts.Request(recorder, "POST", "/api/users", users.CreateUserRequest_v0{
 						User: *newUser,
-					}, adminUser, &response)
+					}, &response, &th.AuthOptions{APIUser: adminUser})
+				})
+
+				It("returns status code of StatusBadRequest (400)", func() {
+					Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+				})
+				It("returns nil user", func() {
+					Expect(response.User).To(Equal(domain.User{}))
+					Expect(response.Success).To(Equal(false))
+				})
+			})
+			Context("when username already exists", func() {
+
+				var newUser *domain.NewUser
+				var response users.CreateUserResponse_v0
+
+				BeforeEach(func() {
+					newUser = gory.Build("newUserInvalidEmail").(*domain.NewUser)
+					newUser.Username = adminUser.Username
+					ts.Request(recorder, "POST", "/api/users", users.CreateUserRequest_v0{
+						User: *newUser,
+					}, &response, &th.AuthOptions{APIUser: adminUser})
+				})
+
+				It("returns status code of StatusBadRequest (400)", func() {
+					Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+				})
+				It("returns nil user", func() {
+					Expect(response.User).To(Equal(domain.User{}))
+					Expect(response.Success).To(Equal(false))
+				})
+			})
+			Context("when email belongs to existing user", func() {
+
+				var newUser *domain.NewUser
+				var response users.CreateUserResponse_v0
+
+				BeforeEach(func() {
+					newUser = gory.Build("newUserInvalidEmail").(*domain.NewUser)
+					newUser.Email = adminUser.Email
+					ts.Request(recorder, "POST", "/api/users", users.CreateUserRequest_v0{
+						User: *newUser,
+					}, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusBadRequest (400)", func() {
@@ -291,9 +436,9 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 			BeforeEach(func() {
 
 				newUser = gory.Build("newUser").(*domain.NewUser)
-				sendRequestHelper("POST", "/api/users", users.CreateUserRequest_v0{
+				ts.Request(recorder, "POST", "/api/users", users.CreateUserRequest_v0{
 					User: *newUser,
-				}, nil, &response)
+				}, &response, nil)
 
 			})
 
@@ -307,6 +452,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				Expect(response.Success).To(Equal(true))
 			})
 		})
+
 		Context("when API user is an active user", func() {
 
 			var activeUser *domain.User
@@ -319,9 +465,31 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				db.Insert(repositories.UsersCollection, activeUser)
 
 				newUser = gory.Build("newUser").(*domain.NewUser)
-				sendRequestHelper("POST", "/api/users", users.CreateUserRequest_v0{
+				ts.Request(recorder, "POST", "/api/users", users.CreateUserRequest_v0{
 					User: *newUser,
-				}, activeUser, &response)
+				}, &response, &th.AuthOptions{APIUser: activeUser})
+			})
+
+			It("returns status code of StatusForbidden (403)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an inactive admin", func() {
+
+			var adminUser *domain.User
+			var newUser *domain.NewUser
+			var response users.CreateUserResponse_v0
+
+			BeforeEach(func() {
+
+				adminUser = gory.Build("inactiveAdminAPIUser").(*domain.User)
+				db.Insert(repositories.UsersCollection, adminUser)
+
+				newUser = gory.Build("newUser").(*domain.NewUser)
+				ts.Request(recorder, "POST", "/api/users", users.CreateUserRequest_v0{
+					User: *newUser,
+				}, &response, &th.AuthOptions{APIUser: adminUser})
 			})
 
 			It("returns status code of StatusForbidden (403)", func() {
@@ -356,10 +524,10 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				Context("when delete one of the users", func() {
 					var response users.UpdateUsersResponse_v0
 					BeforeEach(func() {
-						sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{
+						ts.Request(recorder, "PUT", "/api/users", users.UpdateUsersRequest_v0{
 							Action: "delete",
 							IDs:    []string{user1.ID.Hex()},
-						}, adminUser, &response)
+						}, &response, &th.AuthOptions{APIUser: adminUser})
 					})
 
 					It("returns status code of StatusOK (200)", func() {
@@ -375,10 +543,10 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				Context("when IDs array is empty", func() {
 					var response users.UpdateUsersResponse_v0
 					BeforeEach(func() {
-						sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{
+						ts.Request(recorder, "PUT", "/api/users", users.UpdateUsersRequest_v0{
 							Action: "delete",
 							IDs:    []string{},
-						}, adminUser, &response)
+						}, &response, &th.AuthOptions{APIUser: adminUser})
 					})
 					It("returns status code of StatusOK (200)", func() {
 						Expect(recorder.Code).To(Equal(http.StatusOK))
@@ -393,10 +561,10 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				Context("when one of the IDs is not a valid ObjectId", func() {
 					var response users.UpdateUsersResponse_v0
 					BeforeEach(func() {
-						sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{
+						ts.Request(recorder, "PUT", "/api/users", users.UpdateUsersRequest_v0{
 							Action: "delete",
 							IDs:    []string{"INVALIDID"},
-						}, adminUser, &response)
+						}, &response, &th.AuthOptions{APIUser: adminUser})
 					})
 					It("returns status code of StatusOK (200)", func() {
 						Expect(recorder.Code).To(Equal(http.StatusOK))
@@ -416,10 +584,10 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 
 				BeforeEach(func() {
 
-					sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{
+					ts.Request(recorder, "PUT", "/api/users", users.UpdateUsersRequest_v0{
 						Action: "NOTSUPPORTED",
 						IDs:    []string{},
-					}, adminUser, &response)
+					}, &response, &th.AuthOptions{APIUser: adminUser})
 
 				})
 
@@ -439,7 +607,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				var response users.UpdateUsersResponse_v0
 
 				BeforeEach(func() {
-					sendRequestHelper("PUT", "/api/users", "BADJSON", adminUser, &response)
+					ts.Request(recorder, "PUT", "/api/users", "BADJSON", &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusBadRequest (400)", func() {
@@ -456,13 +624,14 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 			var response users.UpdateUsersResponse_v0
 
 			BeforeEach(func() {
-				sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{}, nil, &response)
+				ts.Request(recorder, "PUT", "/api/users", users.UpdateUsersRequest_v0{}, &response, nil)
 			})
 
 			It("returns status code of StatusForbidden (403)", func() {
 				Expect(recorder.Code).To(Equal(http.StatusForbidden))
 			})
 		})
+
 		Context("when API user is an active user", func() {
 
 			var activeUser *domain.User
@@ -473,7 +642,25 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				activeUser = gory.Build("user").(*domain.User)
 				db.Insert(repositories.UsersCollection, activeUser)
 
-				sendRequestHelper("PUT", "/api/users", users.UpdateUsersRequest_v0{}, activeUser, &response)
+				ts.Request(recorder, "PUT", "/api/users", users.UpdateUsersRequest_v0{}, &response, &th.AuthOptions{APIUser: activeUser})
+			})
+
+			It("returns status code of StatusForbidden (403)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an inactive admin", func() {
+
+			var adminUser *domain.User
+			var response users.CreateUserResponse_v0
+
+			BeforeEach(func() {
+
+				adminUser = gory.Build("inactiveAdminAPIUser").(*domain.User)
+				db.Insert(repositories.UsersCollection, adminUser)
+
+				ts.Request(recorder, "PUT", "/api/users", users.UpdateUsersRequest_v0{}, &response, &th.AuthOptions{APIUser: adminUser})
 			})
 
 			It("returns status code of StatusForbidden (403)", func() {
@@ -496,9 +683,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				var response users.DeleteAllUsersResponse_v0
 
 				BeforeEach(func() {
-
-					sendRequestHelper("DELETE", "/api/users", nil, adminUser, &response)
-
+					ts.Request(recorder, "DELETE", "/api/users", nil, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusOK (200)", func() {
@@ -525,7 +710,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					db.Insert(repositories.UsersCollection, user1)
 					db.Insert(repositories.UsersCollection, user2)
 
-					sendRequestHelper("DELETE", "/api/users", nil, adminUser, &response)
+					ts.Request(recorder, "DELETE", "/api/users", nil, &response, &th.AuthOptions{APIUser: adminUser})
 
 				})
 
@@ -536,6 +721,51 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					Expect(response.Success).To(Equal(true))
 				})
 
+			})
+		})
+
+		Context("when API user is anonymous", func() {
+
+			var response users.DeleteAllUsersResponse_v0
+
+			BeforeEach(func() {
+				ts.Request(recorder, "DELETE", "/api/users", nil, &response, nil)
+			})
+
+			It("returns status code of StatusForbidden (403)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an active user", func() {
+
+			var activeUser *domain.User
+
+			BeforeEach(func() {
+				activeUser = gory.Build("user").(*domain.User)
+				db.Insert(repositories.UsersCollection, activeUser)
+			})
+			var response users.DeleteAllUsersResponse_v0
+			It("returns status code of StatusOK (200)", func() {
+				ts.Request(recorder, "DELETE", "/api/users", nil, &response, &th.AuthOptions{APIUser: activeUser})
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an inactive admin", func() {
+
+			var adminUser *domain.User
+			var response users.DeleteAllUsersResponse_v0
+
+			BeforeEach(func() {
+				adminUser = gory.Build("inactiveAdminAPIUser").(*domain.User)
+				db.Insert(repositories.UsersCollection, adminUser)
+
+				ts.Request(recorder, "DELETE", "/api/users", nil, &response, &th.AuthOptions{APIUser: adminUser})
+			})
+
+			It("returns status code of StatusForbidden (403)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
 			})
 		})
 
@@ -560,7 +790,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					user = gory.Build("user").(*domain.User)
 					db.Insert(repositories.UsersCollection, user)
 
-					sendRequestHelper("GET", fmt.Sprintf("/api/users/%v", user.ID.Hex()), nil, adminUser, &response)
+					ts.Request(recorder, "GET", fmt.Sprintf("/api/users/%v", user.ID.Hex()), nil, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusOK (200)", func() {
@@ -581,7 +811,8 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 
 				var response users.GetUserResponse_v0
 				BeforeEach(func() {
-					sendRequestHelper("GET", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), nil, adminUser, &response)
+
+					ts.Request(recorder, "GET", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), nil, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusBadRequest (400)", func() {
@@ -597,7 +828,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 
 				var response users.GetUserResponse_v0
 				BeforeEach(func() {
-					sendRequestHelper("GET", "/api/users/INVALIDID", nil, adminUser, &response)
+					ts.Request(recorder, "GET", "/api/users/INVALIDID", nil, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusBadRequest (400)", func() {
@@ -636,23 +867,36 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					})
 
 					Context("when code is correct", func() {
-						var response users.ConfirmUserResponse_v0
-						BeforeEach(func() {
-							sendRequestHelper("GET", fmt.Sprintf("/api/users/%v/confirm?code=%v", user.ID.Hex(), user.ConfirmationCode), nil, adminUser, &response)
+						Context("when PostCreateSessionHook returns OK", func() {
+							var response users.ConfirmUserResponse_v0
+							BeforeEach(func() {
+								ts.Request(recorder, "GET", fmt.Sprintf("/api/users/%v/confirm?code=%v", user.ID.Hex(), user.ConfirmationCode), nil, &response, &th.AuthOptions{APIUser: adminUser})
+							})
+							It("returns status code of StatusOK (200)", func() {
+								Expect(recorder.Code).To(Equal(http.StatusOK))
+							})
+							It("returns OK", func() {
+								Expect(response.User.ID).To(Equal(user.ID))
+								Expect(response.Success).To(Equal(true))
+								Expect(response.Code).To(Equal(user.ConfirmationCode))
+							})
 						})
-						It("returns status code of StatusOK (200)", func() {
-							Expect(recorder.Code).To(Equal(http.StatusOK))
-						})
-						It("returns OK", func() {
-							Expect(response.User.ID).To(Equal(user.ID))
-							Expect(response.Success).To(Equal(true))
-							Expect(response.Code).To(Equal(user.ConfirmationCode))
+						Context("when PostCreateSessionHook failed", func() {
+
+							var response users.ConfirmUserResponse_v0
+							BeforeEach(func() {
+
+								ts2.Request(recorder, "GET", fmt.Sprintf("/api/users/%v/confirm?code=%v", user.ID.Hex(), user.ConfirmationCode), nil, &response, &th.AuthOptions{APIUser: adminUser})
+							})
+							It("returns status code of StatusBadRequest (400)", func() {
+								Expect(recorder.Code).To(Equal(http.StatusBadRequest))
+							})
 						})
 					})
 					Context("when code is incorrect", func() {
 						var response users.ConfirmUserResponse_v0
 						BeforeEach(func() {
-							sendRequestHelper("GET", fmt.Sprintf("/api/users/%v/confirm?code=WRONGCODE", user.ID.Hex()), nil, adminUser, &response)
+							ts.Request(recorder, "GET", fmt.Sprintf("/api/users/%v/confirm?code=WRONGCODE", user.ID.Hex()), nil, &response, &th.AuthOptions{APIUser: adminUser})
 						})
 						It("returns status code of StatusBadRequest (400)", func() {
 							Expect(recorder.Code).To(Equal(http.StatusBadRequest))
@@ -665,7 +909,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					Context("when code is empty/unspecified", func() {
 						var response users.ConfirmUserResponse_v0
 						BeforeEach(func() {
-							sendRequestHelper("GET", fmt.Sprintf("/api/users/%v/confirm", user.ID.Hex()), nil, adminUser, &response)
+							ts.Request(recorder, "GET", fmt.Sprintf("/api/users/%v/confirm", user.ID.Hex()), nil, &response, &th.AuthOptions{APIUser: adminUser})
 						})
 						It("returns status code of StatusBadRequest (400)", func() {
 							Expect(recorder.Code).To(Equal(http.StatusBadRequest))
@@ -687,7 +931,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					Context("when code is correct", func() {
 						var response users.ConfirmUserResponse_v0
 						BeforeEach(func() {
-							sendRequestHelper("GET", fmt.Sprintf("/api/users/%v/confirm?code=%v", user.ID.Hex(), user.ConfirmationCode), nil, adminUser, &response)
+							ts.Request(recorder, "GET", fmt.Sprintf("/api/users/%v/confirm?code=%v", user.ID.Hex(), user.ConfirmationCode), nil, &response, &th.AuthOptions{APIUser: adminUser})
 						})
 						It("returns status code of StatusBadRequest (400)", func() {
 							Expect(recorder.Code).To(Equal(http.StatusBadRequest))
@@ -699,7 +943,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					Context("when code is incorrect", func() {
 						var response users.ConfirmUserResponse_v0
 						BeforeEach(func() {
-							sendRequestHelper("GET", fmt.Sprintf("/api/users/%v/confirm?code=WRONGCODE", user.ID.Hex()), nil, adminUser, &response)
+							ts.Request(recorder, "GET", fmt.Sprintf("/api/users/%v/confirm?code=WRONGCODE", user.ID.Hex()), nil, &response, &th.AuthOptions{APIUser: adminUser})
 						})
 						It("returns status code of StatusBadRequest (400)", func() {
 							Expect(recorder.Code).To(Equal(http.StatusBadRequest))
@@ -712,7 +956,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					Context("when code is empty/unspecified", func() {
 						var response users.ConfirmUserResponse_v0
 						BeforeEach(func() {
-							sendRequestHelper("GET", fmt.Sprintf("/api/users/%v/confirm", user.ID.Hex()), nil, adminUser, &response)
+							ts.Request(recorder, "GET", fmt.Sprintf("/api/users/%v/confirm", user.ID.Hex()), nil, &response, &th.AuthOptions{APIUser: adminUser})
 						})
 						It("returns status code of StatusBadRequest (400)", func() {
 							Expect(recorder.Code).To(Equal(http.StatusBadRequest))
@@ -727,7 +971,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 			Context("when user does not exist", func() {
 				var response users.GetUserResponse_v0
 				BeforeEach(func() {
-					sendRequestHelper("GET", fmt.Sprintf("/api/users/%v/confirm", bson.NewObjectId().Hex()), nil, adminUser, &response)
+					ts.Request(recorder, "GET", fmt.Sprintf("/api/users/%v/confirm", bson.NewObjectId().Hex()), nil, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusBadRequest (400)", func() {
@@ -774,9 +1018,9 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 							CreatedDate:      time.Date(1975, time.July, 1, 1, 1, 1, 1, loc),
 						}
 						// send request
-						sendRequestHelper("PUT", fmt.Sprintf("/api/users/%v", user.ID.Hex()), users.UpdateUserRequest_v0{
+						ts.Request(recorder, "PUT", fmt.Sprintf("/api/users/%v", user.ID.Hex()), users.UpdateUserRequest_v0{
 							User: *changedFields,
-						}, adminUser, &response)
+						}, &response, &th.AuthOptions{APIUser: adminUser})
 
 					})
 
@@ -808,9 +1052,9 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 
 						changedFields = &domain.User{}
 						// send request
-						sendRequestHelper("PUT", fmt.Sprintf("/api/users/%v", user.ID.Hex()), users.UpdateUserRequest_v0{
+						ts.Request(recorder, "PUT", fmt.Sprintf("/api/users/%v", user.ID.Hex()), users.UpdateUserRequest_v0{
 							User: *changedFields,
-						}, adminUser, &response)
+						}, &response, &th.AuthOptions{APIUser: adminUser})
 
 					})
 
@@ -848,7 +1092,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 						user = gory.Build("user").(*domain.User)
 						db.Insert(repositories.UsersCollection, user)
 
-						sendRequestHelper("PUT", fmt.Sprintf("/api/users/%v", user.ID.Hex()), "BADJSON", adminUser, &response)
+						ts.Request(recorder, "PUT", fmt.Sprintf("/api/users/%v", user.ID.Hex()), "BADJSON", &response, &th.AuthOptions{APIUser: adminUser})
 					})
 
 					It("returns status code of StatusBadRequest (400)", func() {
@@ -868,9 +1112,9 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					// insert a user into
 					changedFields = &domain.User{}
 					// send request
-					sendRequestHelper("PUT", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), users.UpdateUserRequest_v0{
+					ts.Request(recorder, "PUT", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), users.UpdateUserRequest_v0{
 						User: *changedFields,
-					}, adminUser, &response)
+					}, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusBadRequest (400)", func() {
@@ -888,9 +1132,9 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					// insert a user into
 					changedFields = &domain.User{}
 					// send request
-					sendRequestHelper("PUT", "/api/users/NOTANID1a548b7539d00001f", users.UpdateUserRequest_v0{
+					ts.Request(recorder, "PUT", "/api/users/NOTANID1a548b7539d00001f", users.UpdateUserRequest_v0{
 						User: *changedFields,
-					}, adminUser, &response)
+					}, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 
 				It("returns status code of StatusBadRequest (400)", func() {
@@ -902,10 +1146,72 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 			})
 
 		})
+
+		Context("when API user is anonymous", func() {
+
+			var response users.UpdateUserResponse_v0
+			It("returns status code of StatusForbidden (403)", func() {
+				ts.Request(recorder, "PUT", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), users.UpdateUserRequest_v0{}, &response, nil)
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an active user and updating his own user data", func() {
+
+			var activeUser *domain.User
+			var response users.UpdateUserResponse_v0
+
+			BeforeEach(func() {
+				activeUser = gory.Build("user").(*domain.User)
+				db.Insert(repositories.UsersCollection, activeUser)
+				ts.Request(recorder, "PUT", fmt.Sprintf("/api/users/%v", activeUser.ID.Hex()), users.UpdateUserRequest_v0{}, &response, &th.AuthOptions{APIUser: activeUser})
+			})
+
+			It("returns status code of StatusOK (200)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusOK))
+			})
+			It("returns successful response", func() {
+				Expect(response.Success).To(Equal(true))
+			})
+		})
+
+		Context("when API user is an active user but trying to update another user", func() {
+
+			var activeUser *domain.User
+			var activeUser2 *domain.User
+			var response users.UpdateUserResponse_v0
+
+			BeforeEach(func() {
+				activeUser = gory.Build("user").(*domain.User)
+				activeUser2 = gory.Build("user").(*domain.User)
+				db.Insert(repositories.UsersCollection, activeUser)
+				db.Insert(repositories.UsersCollection, activeUser2)
+				ts.Request(recorder, "PUT", fmt.Sprintf("/api/users/%v", activeUser2.ID.Hex()), users.UpdateUserRequest_v0{}, &response, &th.AuthOptions{APIUser: activeUser})
+			})
+
+			It("returns status code of StatusForbidden (403)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an inactive admin", func() {
+
+			var inactiveAdminUser *domain.User
+			var response users.UpdateUserResponse_v0
+
+			BeforeEach(func() {
+				inactiveAdminUser = gory.Build("inactiveAdminAPIUser").(*domain.User)
+				db.Insert(repositories.UsersCollection, inactiveAdminUser)
+				ts.Request(recorder, "PUT", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), users.UpdateUserRequest_v0{}, &response, &th.AuthOptions{APIUser: inactiveAdminUser})
+
+			})
+			It("returns status code of StatusOK (200)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
 	})
 
 	Describe("DELETE /api/users/{id}", func() {
-
 		Context("when API user is an active admin", func() {
 			var adminUser *domain.User
 
@@ -927,7 +1233,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					db.Insert(repositories.UsersCollection, user1)
 					db.Insert(repositories.UsersCollection, user2)
 
-					sendRequestHelper("DELETE", fmt.Sprintf("/api/users/%v", user1.ID.Hex()), nil, adminUser, &response)
+					ts.Request(recorder, "DELETE", fmt.Sprintf("/api/users/%v", user1.ID.Hex()), nil, &response, &th.AuthOptions{APIUser: adminUser})
 
 				})
 				It("returns status code of StatusOK (200)", func() {
@@ -943,7 +1249,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				var response users.DeleteUserResponse_v0
 
 				BeforeEach(func() {
-					sendRequestHelper("DELETE", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), nil, adminUser, &response)
+					ts.Request(recorder, "DELETE", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), nil, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 				It("returns status code of StatusBadRequest (400)", func() {
 					Expect(recorder.Code).To(Equal(http.StatusBadRequest))
@@ -958,7 +1264,7 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 				var response users.DeleteUserResponse_v0
 
 				BeforeEach(func() {
-					sendRequestHelper("DELETE", "/api/users/INVALID", nil, adminUser, &response)
+					ts.Request(recorder, "DELETE", "/api/users/INVALID", nil, &response, &th.AuthOptions{APIUser: adminUser})
 				})
 				It("returns status code of StatusBadRequest (400)", func() {
 					Expect(recorder.Code).To(Equal(http.StatusBadRequest))
@@ -967,6 +1273,51 @@ var _ = Describe("Users API - /api/users; version=0.0", func() {
 					Expect(response.Success).To(Equal(false))
 				})
 
+			})
+		})
+
+		Context("when API user is anonymous", func() {
+
+			var response users.DeleteUserResponse_v0
+
+			BeforeEach(func() {
+				ts.Request(recorder, "DELETE", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), nil, &response, nil)
+			})
+
+			It("returns status code of StatusForbidden (403)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an active user", func() {
+
+			var activeUser *domain.User
+			var response users.DeleteUserResponse_v0
+
+			BeforeEach(func() {
+				activeUser = gory.Build("user").(*domain.User)
+				db.Insert(repositories.UsersCollection, activeUser)
+				ts.Request(recorder, "DELETE", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), nil, &response, &th.AuthOptions{APIUser: activeUser})
+			})
+			It("returns status code of StatusOK (200)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+			})
+		})
+
+		Context("when API user is an inactive admin", func() {
+
+			var inactiveAdminUser *domain.User
+			var response users.DeleteUserResponse_v0
+
+			BeforeEach(func() {
+				inactiveAdminUser = gory.Build("inactiveAdminAPIUser").(*domain.User)
+				db.Insert(repositories.UsersCollection, inactiveAdminUser)
+
+				ts.Request(recorder, "DELETE", fmt.Sprintf("/api/users/%v", bson.NewObjectId().Hex()), nil, &response, &th.AuthOptions{APIUser: inactiveAdminUser})
+			})
+
+			It("returns status code of StatusForbidden (403)", func() {
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
 			})
 		})
 	})

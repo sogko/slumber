@@ -1,6 +1,7 @@
 package users
 
 import (
+	"errors"
 	"github.com/gorilla/mux"
 	"github.com/sogko/slumber/controllers"
 	"github.com/sogko/slumber/domain"
@@ -123,25 +124,21 @@ func HandleUpdateUsers_v0(w http.ResponseWriter, req *http.Request, ctx domain.I
 
 	var message = "User list updated"
 	var success bool = true
+	var returnStatus = http.StatusOK
 
 	if body.Action == "delete" {
 		repo := repositories.UserRepository{db}
 		err = repo.DeleteUsers(body.IDs)
 	} else {
-		r.JSON(w, http.StatusBadRequest, UpdateUsersResponse_v0{
-			Action:  body.Action,
-			IDs:     body.IDs,
-			Message: "Invalid action",
-			Success: false,
-		})
-		return
+		err = errors.New("Invalid action")
 	}
 	if err != nil {
 		success = false
 		message = err.Error()
+		returnStatus = http.StatusBadRequest
 	}
 
-	r.JSON(w, http.StatusOK, UpdateUsersResponse_v0{
+	r.JSON(w, returnStatus, UpdateUsersResponse_v0{
 		Action:  body.Action,
 		IDs:     body.IDs,
 		Message: message,

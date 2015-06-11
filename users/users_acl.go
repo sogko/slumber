@@ -20,14 +20,7 @@ var ACL = domain.ACLMap{
 		return true, ""
 	},
 	GetUser: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
-		if user == nil {
-			// enforce authenticated access
-			return false, ""
-		}
-		if user.Status != domain.StatusActive {
-			// must be an active user
-			return false, ""
-		}
+		// allow anonymous to get user information
 		return true, ""
 	},
 	CreateUser: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
@@ -82,7 +75,7 @@ var ACL = domain.ACLMap{
 		return true, ""
 	},
 	ConfirmUser: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
-		// allow anonymous access. user is expected to specify `code`
+		// allow anonymous access. user is expected to specify `code` (business logic)
 		return true, ""
 	},
 	UpdateUser: func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {

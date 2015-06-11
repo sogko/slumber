@@ -5,7 +5,9 @@ import (
 	"github.com/gorilla/context"
 	"github.com/sogko/slumber/domain"
 	"github.com/sogko/slumber/middlewares"
+	"gopkg.in/tylerb/graceful.v1"
 	"net/http"
+	"time"
 )
 
 // Request JSON body limit is set at 5MB (currently not enforced)
@@ -13,9 +15,11 @@ const BodyLimitBytes uint32 = 1048576 * 5
 
 // Server type
 type Server struct {
-	negroni *negroni.Negroni
-	Context domain.IContext
-	router  *Router
+	negroni        *negroni.Negroni
+	Context        domain.IContext
+	router         *Router
+	gracefulServer *graceful.Server
+	timeout        time.Duration
 }
 
 // Config type
@@ -37,7 +41,7 @@ func NewServer(options *Config) *Server {
 	// set up request context
 	ctx := middlewares.NewContext()
 
-	s := &Server{n, ctx, nil}
+	s := &Server{n, ctx, nil, nil, 0}
 
 	// set up AccessController
 	ac := middlewares.NewAccessController()
@@ -90,9 +94,18 @@ func (s *Server) SetupRoutes() *Server {
 	return s
 }
 
-func (s *Server) Run(address string) *Server {
-	s.negroni.Run(address)
+func (s *Server) Run(address string, timeout time.Duration) *Server {
+	s.timeout = timeout
+	s.gracefulServer = &graceful.Server{
+		Timeout: timeout,
+		Server:  &http.Server{Addr: address, Handler: s.negroni},
+	}
+	s.gracefulServer.ListenAndServe()
 	return s
+}
+
+func (s *Server) Stop() {
+	s.gracefulServer.Stop(s.timeout)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) *Server {

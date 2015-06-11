@@ -8,6 +8,7 @@ import (
 	"github.com/sogko/slumber/sessions"
 	"github.com/sogko/slumber/users"
 	"io/ioutil"
+	"time"
 )
 
 func main() {
@@ -50,5 +51,5 @@ func main() {
 	s := server.NewServer(&config).SetupRoutes()
 
 	// bam!
-	s.Run(":3001")
+	s.Run(":3001", 10*time.Second)
 }

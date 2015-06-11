@@ -68,6 +68,7 @@ go run main.go
 ```bash
 # production
 go get github.com/codegangsta/negroni   # HTTP server library
+go get gopkg.in/tylerb/graceful.v1      # graceful server shutdown
 go get github.com/gorilla/mux           # HTTP router
 go get github.com/gorilla/context       # Per-request context registry utility
 go get github.com/unrolled/render       # JSON response renderer
@@ -89,7 +90,7 @@ go test
 
 # or
 
-$GOPATH/bin/ginkgo -r -p -node=4
+$GOPATH/bin/ginkgo -r --randomizeAllSpecs -p -node=4
 
 # "-r" watches recursively (including test suites for sub-packages)
 # "-p -nodes=4" parallelize test execution with 4 worker nodes
@@ -104,17 +105,24 @@ $GOPATH/bin/ginkgo watch -r -p -nodes=4
 ```
 
 ## Code coverage
+Coveralls.io link: [https://coveralls.io/r/sogko/slumber]
+
 To generate coverage profile
 
 ```bash
-cd $GOPATH/src/github.com/sogko/slumber/server
-$GOPATH/bin/ginkgo -cover
+cd $GOPATH/src/github.com/sogko/slumber
+
+# run test recursively and generate coverage data for each package
+$GOPATH/bin/ginkgo -r -cover -p
+
+# join coverage data for all packages into a single profile (for coveralls.io)
+$GOPATH/bin/gover . slumber.coverprofile
 ```
 
 To view coverage
 
 ```bash
-go tool cover -html=$GOPATH/src/github.com/sogko/slumber/server/server.coverprofile
+go tool cover -html=$GOPATH/src/github.com/sogko/slumber/slumber.coverprofile
 ```
 
 ## Sessions Management
