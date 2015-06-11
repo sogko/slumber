@@ -1,12 +1,10 @@
-
-<a href="https://github.com/sogko/slumber">
-<img alt="slumber" src="http://i.imgur.com/LmiexWx.png" align="left" height="130"/></a>
-</div>
-
+[![slumber](http://i.imgur.com/RXDVdB0.png)](https://github.com/sogko/slumber)
 [![Build Status](https://drone.io/github.com/sogko/slumber/status.png)](https://drone.io/github.com/sogko/slumber/latest)
 [![Coverage Status](https://coveralls.io/repos/sogko/slumber/badge.svg?branch=master)](https://coveralls.io/r/sogko/slumber?branch=master)
 
 A complete example of a REST-ful API server in written in Go (golang).
+
+-----
 
 ## Features
 - Simple, flexible and testable architecture
