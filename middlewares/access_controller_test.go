@@ -7,6 +7,7 @@ import (
 	"github.com/sogko/slumber/middlewares"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
+	"net/http/httptest"
 )
 
 var _ = Describe("AccessController", func() {
@@ -160,4 +161,59 @@ var _ = Describe("AccessController", func() {
 		})
 	})
 
+	type TestResponse struct {
+		Value string `json:"value,omitempty"`
+		Success bool `json:"success,omitempty"`
+		Message string  `json:"message,omitempty"`
+	}
+	Describe("Handler()", func() {
+		// setup other upstream middlewares
+		ctx := middlewares.NewContext()
+		renderer := middlewares.NewRenderer(&middlewares.RendererOptions{
+			IndentJSON: true,
+		})
+
+		Context("when request is authorized", func () {
+			It("should be working", func() {
+
+				// add test ACL map
+				ac.Add(&domain.ACLMap{
+					"TestAuthorized": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+						return true, ""
+					},
+				})
+
+				recorder := httptest.NewRecorder()
+
+				acHandler := ctx.Inject(ac.Handler("TestAuthorized", func(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {}))
+				renderer.Handler(recorder, request, acHandler, ctx)
+
+				acHandler.ServeHTTP(recorder, request)
+				Expect(recorder.Code).To(Equal(http.StatusOK))
+
+			})
+		})
+
+		Context("when request is forbidden", func () {
+			It("should be working", func() {
+				// add test ACL map
+				ac.Add(&domain.ACLMap{
+					"TestForbidden": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+						return false, ""
+					},
+				})
+
+				recorder := httptest.NewRecorder()
+
+				acHandler := ctx.Inject(ac.Handler("TestForbidden", func(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {}))
+				renderer.Handler(recorder, request, acHandler, ctx)
+
+				acHandler.ServeHTTP(recorder, request)
+				Expect(recorder.Code).To(Equal(http.StatusForbidden))
+
+			})
+		})
+
+
+	})
 })
