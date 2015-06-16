@@ -5,10 +5,35 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/sogko/slumber/test_helpers"
 	"net/http/httptest"
+	"github.com/sogko/slumber/middlewares/context"
 )
 
 var _ = Describe("Test Helpers", func() {
 
+	Describe("NewTestResource", func() {
+
+		It("should return nil routes when options.NilRoutes=true", func() {
+			ctx := context.New()
+			testResource := test_helpers.NewTestResource(ctx, nil, &test_helpers.TestResourceOptions{
+				NilRoutes: true,
+			})
+			Expect(testResource.Routes()).To(BeNil())
+		})
+		It("should return routes when options.NilRoutes=false", func() {
+			ctx := context.New()
+			testResource := test_helpers.NewTestResource(ctx, nil, &test_helpers.TestResourceOptions{
+				NilRoutes: false,
+			})
+			Expect(testResource.Routes()).ToNot(BeNil())
+		})
+		It("should return context", func() {
+			ctx := context.New()
+			testResource := test_helpers.NewTestResource(ctx, nil, &test_helpers.TestResourceOptions{
+				NilRoutes: false,
+			})
+			Expect(testResource.Context()).To(Equal(ctx))
+		})
+	})
 	Describe("MapFromJSON", func() {
 
 		It("should map JSON string bytes to map[] if data is a valid JSON", func() {
