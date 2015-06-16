@@ -3,10 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/sogko/slumber/middlewares"
+	"github.com/sogko/slumber-sessions"
+	"github.com/sogko/slumber-users"
+	"github.com/sogko/slumber/middlewares/context"
+	"github.com/sogko/slumber/middlewares/mongodb"
+	"github.com/sogko/slumber/middlewares/renderer"
 	"github.com/sogko/slumber/server"
-	"github.com/sogko/slumber/sessions"
-	"github.com/sogko/slumber/users"
 	"io/ioutil"
 	"time"
 )
@@ -24,31 +26,53 @@ func main() {
 		panic(errors.New(fmt.Sprintf("Error loading public signing key: %v", err.Error())))
 	}
 
-	// load routes
-	routes := users.Routes.Append(&sessions.Routes)
+	// create current project context
+	ctx := context.New()
 
-	// load ACL map
-	aclMap := users.ACL.Append(&sessions.ACL)
+	// set up DB session
+	db := mongodb.New(&mongodb.Options{
+		ServerName:   "localhost",
+		DatabaseName: "test-go-app",
+	})
+	_ = db.NewSession()
 
-	// set server configuration
-	config := server.Config{
-		Database: &middlewares.MongoDBOptions{
-			ServerName:   "localhost",
-			DatabaseName: "test-go-app",
-		},
-		Renderer: &middlewares.RendererOptions{
-			IndentJSON: true,
-		},
-		Routes: &routes,
-		TokenAuthority: &middlewares.TokenAuthorityOptions{
-			PrivateSigningKey: privateSigningKey,
-			PublicSigningKey:  publicSigningKey,
-		},
-		ACLMap: &aclMap,
-	}
+	// set up Renderer (unrolled_render)
+	renderer := renderer.New(&renderer.Options{
+		IndentJSON: true,
+	}, renderer.JSON)
 
-	// init server and run
-	s := server.NewServer(&config).SetupRoutes()
+	// set up users resource
+	usersResource := users.NewResource(ctx, &users.Options{
+		Database: db,
+		Renderer: renderer,
+	})
+
+	// set up sessions resource
+	sessionsResource := sessions.NewResource(ctx, &sessions.Options{
+		PrivateSigningKey:     privateSigningKey,
+		PublicSigningKey:      publicSigningKey,
+		Database:              db,
+		Renderer:              renderer,
+		UserRepositoryFactory: usersResource.UserRepositoryFactory,
+	})
+
+	// init server
+	s := server.NewServer(&server.Config{
+		Context: ctx,
+	})
+
+	// set up router
+	ac := server.NewAccessController(ctx, renderer)
+	router := server.NewRouter(s.Context, ac)
+
+	// add REST resources to router
+	router.AddResources(sessionsResource, usersResource)
+
+	// add middlewares
+	s.UseMiddleware(sessionsResource.NewAuthenticator())
+
+	// setup router
+	s.UseRouter(router)
 
 	// bam!
 	s.Run(":3001", 10*time.Second)

@@ -4,7 +4,6 @@ import (
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/context"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/middlewares"
 	"gopkg.in/tylerb/graceful.v1"
 	"net/http"
 	"time"
@@ -24,12 +23,7 @@ type Server struct {
 
 // Config type
 type Config struct {
-	Database        domain.IDatabaseOptions
-	Renderer        domain.IRendererOptions
-	Routes          *domain.Routes
-	TokenAuthority  domain.ITokenAuthorityOptions
-	ACLMap          *domain.ACLMap
-	ControllerHooks *domain.ControllerHooksMap
+	Context domain.IContext
 }
 
 // NewServer Returns a new Server object
@@ -38,59 +32,27 @@ func NewServer(options *Config) *Server {
 	// set up server and middlewares
 	n := negroni.Classic()
 
-	// set up request context
-	ctx := middlewares.NewContext()
-
-	s := &Server{n, ctx, nil, nil, 0}
-
-	// set up AccessController
-	ac := middlewares.NewAccessController()
-	if options.ACLMap != nil {
-		ac.Add(options.ACLMap)
-	}
-
-	// set up router
-	// TODO: de-couple ctx and ac from router
-	s.router = NewRouter(options.Routes, ctx, ac)
-
-	// set up db session
-	if options.Database != nil {
-		db := middlewares.NewMongoDB(options.Database)
-		dbSession := db.NewSession()
-		s.UseMiddleware(dbSession.Handler)
-	}
-	// set up renderer
-	if options.Renderer != nil {
-		renderer := middlewares.NewRenderer(options.Renderer)
-		s.UseMiddleware(renderer.Handler)
-	}
-	// set up TokenAuthority
-	if options.TokenAuthority != nil {
-		ta := middlewares.NewTokenAuthority(options.TokenAuthority)
-		s.UseMiddleware(ta.Handler)
-	}
-	// set up Authenticator
-	auth := middlewares.NewAuthenticator()
-	s.UseMiddleware(auth.Handler)
-
-	// register controller hooks
-	if options.ControllerHooks == nil {
-		options.ControllerHooks = &domain.ControllerHooksMap{}
-	}
-	hooks := middlewares.ControllerHooksMiddleware{options.ControllerHooks}
-	s.UseMiddleware(hooks.Handler)
+	s := &Server{n, options.Context, nil, nil, 0}
 
 	return s
 }
 
-func (s *Server) UseMiddleware(middleware func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc, ctx domain.IContext)) *Server {
-	s.negroni.Use(negroni.HandlerFunc(s.Context.InjectWithNext(middleware)))
+func (s *Server) UseMiddleware(middleware domain.IMiddleware) *Server {
+	// next convert it into negroni style handlerfunc
+	s.negroni.Use(negroni.HandlerFunc(middleware.Handler))
 	return s
 }
 
-func (s *Server) SetupRoutes() *Server {
+func (s *Server) UseContextMiddleware(middleware domain.IContextMiddleware) *Server {
+	// take contextual middleware, inject context into it.
+	// next convert it into negroni style handlerfunc
+	s.negroni.Use(negroni.HandlerFunc(s.Context.InjectMiddleware(middleware.Handler)))
+	return s
+}
+
+func (s *Server) UseRouter(router *Router) *Server {
 	// add router and clear mux.context values at the end of request life-times
-	s.negroni.UseHandler(context.ClearHandler(s.router))
+	s.negroni.UseHandler(context.ClearHandler(router))
 	return s
 }
 

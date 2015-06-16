@@ -1,25 +1,18 @@
 package test_helpers_test
 
 import (
-	"encoding/json"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/sogko/slumber-sessions"
+	"github.com/sogko/slumber-users"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/middlewares"
-	"github.com/sogko/slumber/server"
+	"github.com/sogko/slumber/middlewares/context"
+	"github.com/sogko/slumber/middlewares/renderer"
 	"github.com/sogko/slumber/test_helpers"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"net/http/httptest"
 )
-
-type TestRequestBody struct {
-	Value string
-}
-type TestResponseBody struct {
-	Result string
-	Value  string
-}
 
 var _ = Describe("Test Server", func() {
 
@@ -27,83 +20,47 @@ var _ = Describe("Test Server", func() {
 
 	Describe("Request()", func() {
 
+		var sessionsResource *sessions.Resource = nil
+		var usersResource *users.Resource = nil
 		BeforeEach(func() {
-			// configure test server
-			serverConfig := &server.Config{
-				Database: &middlewares.MongoDBOptions{
-					ServerName:   TestDatabaseServerName,
-					DatabaseName: TestDatabaseName,
-				},
-				Renderer: &middlewares.RendererOptions{
-					IndentJSON: true,
-				},
-				TokenAuthority: &middlewares.TokenAuthorityOptions{
-					PrivateSigningKey: privateSigningKey,
-					PublicSigningKey:  publicSigningKey,
-				},
-				Routes: &domain.Routes{
-					domain.Route{
-						Name:           "TestGetRoute",
-						Method:         "GET",
-						Pattern:        "/api/test",
-						DefaultVersion: "0.0",
-						RouteHandlers: domain.RouteHandlers{
-							"0.0": func(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {
-								r := ctx.GetRendererCtx(req)
-								r.JSON(w, http.StatusOK, TestResponseBody{
-									Result: "OK",
-								})
-							},
-						},
-					},
-					domain.Route{
-						Name:           "TestPostRoute",
-						Method:         "POST",
-						Pattern:        "/api/test",
-						DefaultVersion: "0.0",
-						RouteHandlers: domain.RouteHandlers{
-							"0.0": func(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {
-								r := ctx.GetRendererCtx(req)
 
-								var body TestRequestBody
-								decoder := json.NewDecoder(req.Body)
-								err := decoder.Decode(&body)
-								if err != nil {
-									r.JSON(w, http.StatusBadRequest, TestResponseBody{
-										Result: "NOT_OK",
-									})
-								}
-								r.JSON(w, http.StatusOK, TestResponseBody{
-									Result: "OK",
-									Value:  body.Value,
-								})
-							},
-						},
-					},
-				},
-				ACLMap: &domain.ACLMap{
-					"TestGetRoute": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
-						return true, ""
-					},
-					"TestPostRoute": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
-						return true, ""
-					},
-				},
-			}
+			// configure test server
+			ctx := context.New()
+
+			renderer := renderer.New(&renderer.Options{
+				IndentJSON: true,
+			}, renderer.JSON)
+
+			testMiddleware := test_helpers.NewTestMiddleware()
+			testContextMiddleware := test_helpers.NewTestContextMiddleware()
+			testResource := test_helpers.NewTestResource(ctx, renderer, &test_helpers.TestResourceOptions{})
 
 			// create test server
 			ts = test_helpers.NewTestServer(&test_helpers.TestServerOptions{
 				RequestAcceptHeader: "application/json;version=0.0",
-				ServerConfig:        serverConfig,
 				PrivateSigningKey:   privateSigningKey,
 				PublicSigningKey:    publicSigningKey,
+				Resources:           []domain.IResource{testResource},
+				Middlewares:         []interface{}{testMiddleware, testContextMiddleware, nil},
 			})
+
+			usersResource = users.NewResource(ctx, &users.Options{
+				Database: ts.Database,
+				Renderer: ts.Renderer,
+			})
+
+			sessionsResource = sessions.NewResource(ctx, &sessions.Options{
+				Database:              ts.Database,
+				Renderer:              ts.Renderer,
+				UserRepositoryFactory: usersResource.UserRepositoryFactory,
+			})
+			ts.AddResources(sessionsResource)
 
 		})
 
 		Context("Basic request", func() {
 			It("returns status code of StatusOK (200)", func() {
-				var response TestResponseBody
+				var response test_helpers.TestResponseBody
 				recorder := httptest.NewRecorder()
 
 				ts.Request(recorder, "GET", "/api/test", nil, &response, nil)
@@ -115,10 +72,10 @@ var _ = Describe("Test Server", func() {
 
 		Context("Non-empty JSON valid body", func() {
 			It("returns status code of StatusOK (200)", func() {
-				var response TestResponseBody
+				var response test_helpers.TestResponseBody
 				recorder := httptest.NewRecorder()
 
-				ts.Request(recorder, "POST", "/api/test", TestRequestBody{
+				ts.Request(recorder, "POST", "/api/test", test_helpers.TestRequestBody{
 					Value: "string",
 				}, &response, nil)
 
@@ -129,7 +86,7 @@ var _ = Describe("Test Server", func() {
 		})
 		Context("Non-empty JSON invalid body", func() {
 			It("returns status code of StatusBadRequest (400)", func() {
-				var response TestResponseBody
+				var response test_helpers.TestResponseBody
 				recorder := httptest.NewRecorder()
 
 				ts.Request(recorder, "POST", "/api/test", "INVALID", &response, nil)
@@ -140,13 +97,29 @@ var _ = Describe("Test Server", func() {
 		})
 
 		Context("AuthOptions.Token", func() {
-			It("returns status code of StatusUnauthorized (401)", func() {
-				var response TestResponseBody
-				recorder := httptest.NewRecorder()
-				ts.Request(recorder, "GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
-					Token: "invalidrandomtokenshould401",
+			Context("without sessions.Authenticator enabled", func() {
+				It("returns status code of StatusUnauthorized (401)", func() {
+					var response test_helpers.TestResponseBody
+					recorder := httptest.NewRecorder()
+					ts.Request(recorder, "GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
+						Token: "invalidrandomtokenshould401",
+					})
+					Expect(recorder.Code).To(Equal(http.StatusOK))
 				})
-				Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+			})
+			Context("with sessions.Authenticator enabled", func() {
+				It("returns status code of StatusUnauthorized (401)", func() {
+					var response test_helpers.TestResponseBody
+					recorder := httptest.NewRecorder()
+
+					// add sessions authenticator middleware
+					ts.AddMiddlewares(sessionsResource.NewAuthenticator())
+
+					ts.Request(recorder, "GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
+						Token: "invalidrandomtokenshould401",
+					})
+					Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
+				})
 			})
 		})
 		Context("AuthOptions.APIUser", func() {
@@ -154,17 +127,17 @@ var _ = Describe("Test Server", func() {
 
 				// create fake user
 				// since routes does not need authorization to access
-				user := domain.User{
+				user := users.User{
 					ID:       bson.NewObjectId(),
 					Username: "admin",
 					Status:   "active",
-					Roles: domain.Roles{
-						domain.RoleAdmin,
-						domain.RoleUser,
+					Roles: users.Roles{
+						users.RoleAdmin,
+						users.RoleUser,
 					},
 				}
 
-				var response TestResponseBody
+				var response test_helpers.TestResponseBody
 				recorder := httptest.NewRecorder()
 				ts.Request(recorder, "GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
 					APIUser: &user,

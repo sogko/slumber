@@ -1,67 +1,75 @@
-package middlewares_test
+package server_test
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/sogko/slumber-users"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/middlewares"
+	"github.com/sogko/slumber/middlewares/context"
+	"github.com/sogko/slumber/middlewares/renderer"
+	"github.com/sogko/slumber/server"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"net/http/httptest"
 )
 
+func SetCurrentObjectCtx(ctx domain.IContext, req *http.Request, user *users.User) {
+	ctx.Set(req, "TESTCURRENTOBJECT", user)
+}
+func GetCurrentObjectCtx(ctx domain.IContext, req *http.Request) *users.User {
+	return ctx.Get(req, "TESTCURRENTOBJECT").(*users.User)
+}
+
 var _ = Describe("AccessController", func() {
 
 	var request *http.Request
-	var ctx *middlewares.Context
-	var adminUser *domain.User
-	var normalUser *domain.User
-	var anotherNormalUser *domain.User
-	var ac *middlewares.AccessController
+	var ctx domain.IContext
+	var adminUser *users.User
+	var normalUser *users.User
+	var anotherNormalUser *users.User
+	var ac *server.AccessController
 	var aclMap domain.ACLMap
 
 	BeforeEach(func() {
 
 		// dummy request and context object
 		request, _ = http.NewRequest("GET", "/test/api", nil)
-		ctx = middlewares.NewContext()
+		ctx = context.New()
 
 		// create users with roles
-		adminUser = &domain.User{
+		adminUser = &users.User{
 			ID:    bson.NewObjectId(),
-			Roles: domain.Roles{domain.RoleAdmin},
+			Roles: users.Roles{users.RoleAdmin},
 		}
-		normalUser = &domain.User{
+		normalUser = &users.User{
 			ID:    bson.NewObjectId(),
-			Roles: domain.Roles{domain.RoleUser},
+			Roles: users.Roles{users.RoleUser},
 		}
-		anotherNormalUser = &domain.User{
+		anotherNormalUser = &users.User{
 			ID:    bson.NewObjectId(),
-			Roles: domain.Roles{domain.RoleUser},
+			Roles: users.Roles{users.RoleUser},
 		}
 
 		// create test ACL Map
 		aclMap = domain.ACLMap{
-			"ListUsers": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+			"ListUsers": func(req *http.Request, user domain.IUser) (bool, string) {
 				// does not require special privileges
 				return true, ""
 			},
-			"EditUser": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+			"EditUser": func(req *http.Request, user domain.IUser) (bool, string) {
 				// This is an example of determining access to current resource by storing/retrieving
 				// contextual data from IContext
 				// In practical use, the handler might use route params (for eg /api/users/{id})
 				// to get current resource context
-				currObj := ctx.GetCurrentObjectCtx(req)
-				if currObj == nil {
-					currObj = &domain.User{}
-				}
-				userObj := currObj.(*domain.User)
-				return user.HasRole(domain.RoleAdmin) || user.ID == userObj.ID, ""
+				currentObj := GetCurrentObjectCtx(ctx, req)
+				return (user.HasRole(users.RoleAdmin) || user.GetID() == currentObj.ID.Hex()), ""
 			},
 		}
 
+		renderer := renderer.New(&renderer.Options{}, renderer.JSON)
+
 		// create and init AccessController
-		ac = middlewares.NewAccessController()
+		ac = server.NewAccessController(ctx, renderer)
 
 	})
 
@@ -90,7 +98,7 @@ var _ = Describe("AccessController", func() {
 		})
 		Context("when it already have something", func() {
 			BeforeEach(func() {
-				stub := func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+				stub := func(req *http.Request, user domain.IUser) (bool, string) {
 					return true, ""
 				}
 				ac.Add(&domain.ACLMap{
@@ -133,28 +141,28 @@ var _ = Describe("AccessController", func() {
 		})
 		Context("when user is authorized (an admin)", func() {
 			It("return OK", func() {
-				ctx.SetCurrentObjectCtx(request, normalUser)
+				SetCurrentObjectCtx(ctx, request, normalUser)
 				result, _ := ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", adminUser)
 				Expect(result).To(BeTrue())
 			})
 		})
 		Context("when user is authorized (owns `user` resource)", func() {
 			It("return OK", func() {
-				ctx.SetCurrentObjectCtx(request, normalUser)
+				SetCurrentObjectCtx(ctx, request, normalUser)
 				result, _ := ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", normalUser)
 				Expect(result).To(BeTrue())
 			})
 		})
 		Context("when user is not authorized", func() {
 			It("return not OK", func() {
-				ctx.SetCurrentObjectCtx(request, anotherNormalUser)
+				SetCurrentObjectCtx(ctx, request, anotherNormalUser)
 				result, _ := ac.IsHTTPRequestAuthorized(request, ctx, "EditUser", normalUser)
 				Expect(result).To(BeFalse())
 			})
 		})
 		Context("when action does not exists", func() {
 			It("return not OK", func() {
-				ctx.SetCurrentObjectCtx(request, normalUser)
+				SetCurrentObjectCtx(ctx, request, normalUser)
 				result, _ := ac.IsHTTPRequestAuthorized(request, ctx, "NonExistent", normalUser)
 				Expect(result).To(BeFalse())
 			})
@@ -162,30 +170,30 @@ var _ = Describe("AccessController", func() {
 	})
 
 	type TestResponse struct {
-		Value string `json:"value,omitempty"`
-		Success bool `json:"success,omitempty"`
-		Message string  `json:"message,omitempty"`
+		Value   string `json:"value,omitempty"`
+		Success bool   `json:"success,omitempty"`
+		Message string `json:"message,omitempty"`
 	}
 	Describe("Handler()", func() {
 		// setup other upstream middlewares
-		ctx := middlewares.NewContext()
-		renderer := middlewares.NewRenderer(&middlewares.RendererOptions{
+		ctx := context.New()
+		renderer := renderer.New(&renderer.Options{
 			IndentJSON: true,
-		})
+		}, renderer.JSON)
 
-		Context("when request is authorized", func () {
+		Context("when request is authorized", func() {
 			It("should be working", func() {
 
 				// add test ACL map
 				ac.Add(&domain.ACLMap{
-					"TestAuthorized": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+					"TestAuthorized": func(req *http.Request, user domain.IUser) (bool, string) {
 						return true, ""
 					},
 				})
 
 				recorder := httptest.NewRecorder()
 
-				acHandler := ctx.Inject(ac.Handler("TestAuthorized", func(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {}))
+				acHandler := ac.NewContextHandler("TestAuthorized", func(w http.ResponseWriter, req *http.Request) {})
 				renderer.Handler(recorder, request, acHandler, ctx)
 
 				acHandler.ServeHTTP(recorder, request)
@@ -194,18 +202,18 @@ var _ = Describe("AccessController", func() {
 			})
 		})
 
-		Context("when request is forbidden", func () {
+		Context("when request is forbidden", func() {
 			It("should be working", func() {
 				// add test ACL map
 				ac.Add(&domain.ACLMap{
-					"TestForbidden": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+					"TestForbidden": func(req *http.Request, user domain.IUser) (bool, string) {
 						return false, ""
 					},
 				})
 
 				recorder := httptest.NewRecorder()
 
-				acHandler := ctx.Inject(ac.Handler("TestForbidden", func(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {}))
+				acHandler := ac.NewContextHandler("TestForbidden", func(w http.ResponseWriter, req *http.Request) {})
 				renderer.Handler(recorder, request, acHandler, ctx)
 
 				acHandler.ServeHTTP(recorder, request)
@@ -213,7 +221,6 @@ var _ = Describe("AccessController", func() {
 
 			})
 		})
-
 
 	})
 })

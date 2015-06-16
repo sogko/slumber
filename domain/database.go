@@ -2,11 +2,7 @@ package domain
 
 import (
 	"gopkg.in/mgo.v2"
-	"net/http"
 )
-
-type IDatabaseOptions interface {
-}
 
 type Query map[string]interface{}
 type Change mgo.Change
@@ -14,8 +10,6 @@ type Index mgo.Index
 
 // Database interface
 type IDatabase interface {
-	NewSession() IDatabaseSession
-
 	Insert(name string, obj interface{}) error
 	Update(name string, query Query, change Change, result interface{}) error
 	FindOne(name string, query Query, result interface{}) error
@@ -27,8 +21,4 @@ type IDatabase interface {
 	DropCollection(name string) error
 	DropDatabase() error
 	EnsureIndex(name string, index mgo.Index) error
-}
-
-type IDatabaseSession interface {
-	Handler(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc, ctx IContext)
 }

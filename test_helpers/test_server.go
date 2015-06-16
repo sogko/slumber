@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/sogko/slumber-sessions"
+	sessionsDomain "github.com/sogko/slumber-sessions/domain"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/middlewares"
+	"github.com/sogko/slumber/middlewares/context"
+	"github.com/sogko/slumber/middlewares/mongodb"
+	"github.com/sogko/slumber/middlewares/renderer"
 	"github.com/sogko/slumber/server"
 	"net/http"
 	"net/http/httptest"
@@ -13,35 +17,108 @@ import (
 
 type TestServerOptions struct {
 	RequestAcceptHeader string
-	ServerConfig        *server.Config
 	PrivateSigningKey   []byte
 	PublicSigningKey    []byte
+	TokenAuthority      sessionsDomain.ITokenAuthority
+	Database            domain.IDatabase
+	Renderer            domain.IRenderer
+	Resources           []domain.IResource
+	Middlewares         []interface{}
 }
 
 type TestServer struct {
 	Options        *TestServerOptions
-	TokenAuthority domain.ITokenAuthority
+	Server         *server.Server
+	Router         *server.Router
+	TokenAuthority sessionsDomain.ITokenAuthority
+	Database       domain.IDatabase
+	Renderer       domain.IRenderer
 }
 
 type AuthOptions struct {
-	APIUser *domain.User
+	APIUser domain.IUser
 	Token   string
 }
 
 func NewTestServer(options *TestServerOptions) *TestServer {
 
-	ta := middlewares.NewTokenAuthority(&middlewares.TokenAuthorityOptions{
-		PrivateSigningKey: options.PrivateSigningKey,
-		PublicSigningKey:  options.PublicSigningKey,
+	// set up basic needs for a test server
+
+	ta := options.TokenAuthority
+	if ta == nil {
+		ta = sessions.NewTokenAuthority(&sessions.TokenAuthorityOptions{
+			PrivateSigningKey: options.PrivateSigningKey,
+			PublicSigningKey:  options.PublicSigningKey,
+		})
+	}
+
+	ctx := context.New()
+
+	// init server
+	s := server.NewServer(&server.Config{
+		Context: ctx,
 	})
 
-	ts := TestServer{options, ta}
-	return &ts
+	// set up DB session if not specified
+	db := options.Database
+	if options.Database == nil {
+		db = mongodb.New(&mongodb.Options{
+			ServerName:   "localhost",
+			DatabaseName: "test-go-app",
+		})
+		_ = db.(*mongodb.MongoDB).NewSession()
+	}
 
+	// set up Renderer (unrolled_render)
+	r := options.Renderer
+	if r == nil {
+		r = renderer.New(&renderer.Options{
+			IndentJSON: true,
+		}, renderer.JSON)
+	}
+
+	// set up router
+	ac := server.NewAccessController(ctx, r)
+	router := server.NewRouter(s.Context, ac)
+
+	// init test server
+	ts := TestServer{options, s, router, ta, db, r}
+
+	// add REST resources to router
+	for _, resource := range options.Resources {
+		ts.AddResources(resource)
+	}
+
+	// add middlewares
+	for _, middleware := range options.Middlewares {
+		ts.AddMiddlewares(middleware)
+
+	}
+
+	return &ts
+}
+
+func (ts *TestServer) AddResources(resources ...domain.IResource) {
+	for _, resource := range resources {
+		ts.Router.AddResources(resource)
+	}
+}
+func (ts *TestServer) AddMiddlewares(middlewares ...interface{}) {
+	for _, middleware := range middlewares {
+		switch v := middleware.(type) {
+		case domain.IMiddleware:
+			ts.Server.UseMiddleware(middleware.(domain.IMiddleware))
+		case domain.IContextMiddleware:
+			ts.Server.UseContextMiddleware(middleware.(domain.IContextMiddleware))
+		default:
+			fmt.Println("Unknown middleware, skipping", v)
+		}
+	}
 }
 func (ts *TestServer) Request(recorder *httptest.ResponseRecorder, method string, urlStr string, body interface{}, targetResponse interface{}, authOptions *AuthOptions) {
 
-	var s *server.Server
+	ts.Server.UseRouter(ts.Router)
+
 	var request *http.Request
 
 	// request for version 0.0
@@ -59,15 +136,8 @@ func (ts *TestServer) Request(recorder *httptest.ResponseRecorder, method string
 	}
 	if authOptions.APIUser != nil {
 		// set Authorization header
-		var rolesString []string
-		for _, role := range authOptions.APIUser.Roles {
-			rolesString = append(rolesString, string(role))
-		}
-		token, _ := ts.TokenAuthority.CreateNewSessionToken(&domain.TokenClaims{
-			UserID:   authOptions.APIUser.ID.Hex(),
-			Username: authOptions.APIUser.Username,
-			Status:   authOptions.APIUser.Status,
-			Roles:    rolesString,
+		token, _ := ts.TokenAuthority.CreateNewSessionToken(&sessions.TokenClaims{
+			UserID: authOptions.APIUser.GetID(),
 		})
 		request.Header.Set("Authorization", fmt.Sprintf("Bearer %v", token))
 	} else {
@@ -76,11 +146,8 @@ func (ts *TestServer) Request(recorder *httptest.ResponseRecorder, method string
 		}
 	}
 
-	// init server
-	s = server.NewServer(ts.Options.ServerConfig).SetupRoutes()
-
 	// serve request
-	s.ServeHTTP(recorder, request)
+	ts.Server.ServeHTTP(recorder, request)
 	DecodeResponseToType(recorder, &targetResponse)
 
 }

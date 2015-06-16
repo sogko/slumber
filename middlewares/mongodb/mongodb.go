@@ -1,4 +1,4 @@
-package middlewares
+package mongodb
 
 import (
 	"github.com/sogko/slumber/domain"
@@ -7,33 +7,29 @@ import (
 	"time"
 )
 
-type MongoDBOptions struct {
+const MongoDbKey domain.ContextKey = "slumber-mddlwr-mongodb-key"
+
+type Options struct {
 	ServerName   string
 	DatabaseName string
 	DialTimeout  time.Duration
 }
 
-func NewMongoDB(options domain.IDatabaseOptions) *MongoDB {
+func New(options *Options) *MongoDB {
 	db := &MongoDB{}
 	db.options = options
 	return db
 }
 
-// MongoDatabase implements Database interface
+// MongoDatabase implements IDatabase
 type MongoDB struct {
 	currentDb *mgo.Database
-	options   domain.IDatabaseOptions
+	options   *Options
 }
 
-// CreateSession Returns a new database session
-// Defaults DatabaseOptions:
-// - ServerName   = ""
-// - DatabaseName = ""
-// - DialTimeout  = 60 seconds
-//
-func (db *MongoDB) NewSession() domain.IDatabaseSession {
+func (db *MongoDB) NewSession() *MongoDBSession {
 
-	var mongoOptions = db.options.(*MongoDBOptions)
+	mongoOptions := db.options
 
 	// set default DialTimeout value
 	if mongoOptions.DialTimeout <= 0 {
@@ -98,20 +94,30 @@ func (db *MongoDB) EnsureIndex(name string, index mgo.Index) error {
 	return db.currentDb.C(name).EnsureIndex(index)
 }
 
-// MongoDatabaseSession struct implements DatabaseSession interface
+// MongoDatabaseSession struct implements IContextMiddleware
 type MongoDBSession struct {
 	*mgo.Session
-	*MongoDBOptions
+	*Options
 }
 
-// HandlerWithNext Returns a middleware HandlerFunc that creates and saves a database session into request context
+// Handler Returns a middleware HandlerFunc that creates and saves a database session into request context
 func (session *MongoDBSession) Handler(w http.ResponseWriter, req *http.Request, next http.HandlerFunc, ctx domain.IContext) {
-	// clone the `global` mgo session and save the named database in the request context for thread-safety
 	s := session.Clone()
 	defer s.Close()
 	db := &MongoDB{
 		currentDb: s.DB(session.DatabaseName),
 	}
-	ctx.SetDbCtx(req, db)
+	SetMongoDbCtx(ctx, req, db)
 	next(w, req)
+}
+
+func SetMongoDbCtx(ctx domain.IContext, r *http.Request, db *MongoDB) {
+	ctx.Set(r, MongoDbKey, db)
+}
+
+func GetMongoDbCtx(ctx domain.IContext, r *http.Request) *MongoDB {
+	if db := ctx.Get(r, MongoDbKey); db != nil {
+		return db.(*MongoDB)
+	}
+	return nil
 }

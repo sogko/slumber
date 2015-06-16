@@ -1,63 +1,99 @@
 package server_test
 
 import (
+	"errors"
+	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/middlewares"
+	"github.com/sogko/slumber-sessions"
+	"github.com/sogko/slumber-users"
+	"github.com/sogko/slumber/middlewares/context"
+	"github.com/sogko/slumber/middlewares/mongodb"
+	"github.com/sogko/slumber/middlewares/renderer"
 	"github.com/sogko/slumber/server"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"time"
 )
 
 var _ = Describe("Server", func() {
-	var s *server.Server
-	var routes *domain.Routes
+	// try to load signing keys for token authority
+	// NOTE: DO NOT USE THESE KEYS FOR PRODUCTION! FOR TEST ONLY
+	privateSigningKey, err := ioutil.ReadFile("../keys/demo.rsa")
+	if err != nil {
+		panic(errors.New(fmt.Sprintf("Error loading private signing key: %v", err.Error())))
+	}
+	publicSigningKey, err := ioutil.ReadFile("../keys/demo.rsa.pub")
+	if err != nil {
+		panic(errors.New(fmt.Sprintf("Error loading public signing key: %v", err.Error())))
+	}
 
-	BeforeEach(func() {
-	})
+	Describe("Basic sanity test", func() {
+		ctx := context.New()
 
-	AfterEach(func() {
-	})
+		db := mongodb.New(&mongodb.Options{
+			ServerName:   "localhost",
+			DatabaseName: "test-go-app",
+		})
+		_ = db.NewSession()
 
-	Describe("Default server config", func() {
+		// init renderer
+		renderer := renderer.New(&renderer.Options{
+			IndentJSON: true,
+		}, renderer.JSON)
 
-		routes = &domain.Routes{
-			domain.Route{"Test", "GET", "/api/test", "0.1", domain.RouteHandlers{
-				"0.1": func(rw http.ResponseWriter, req *http.Request, ctx domain.IContext) {
-					r := ctx.GetRendererCtx(req)
-					r.JSON(rw, http.StatusOK, map[string]string{
-						"ok": "ok",
-					})
-				},
-			}},
-		}
-		s = server.NewServer(&server.Config{
-			Database: &middlewares.MongoDBOptions{
-				ServerName:   TestDatabaseServerName,
-				DatabaseName: TestDatabaseName,
-			},
-			Renderer:       &middlewares.RendererOptions{},
-			Routes:         routes,
-			TokenAuthority: &middlewares.TokenAuthorityOptions{},
-		}).SetupRoutes()
-		go s.Run(":8001", 1*time.Millisecond)
-		time.Sleep(100 * time.Millisecond)
-		s.Stop()
-	})
+		// set up users resource
+		usersResource := users.NewResource(ctx, &users.Options{
+			Database: db,
+			Renderer: renderer,
+		})
 
-	Describe("Bad database server config", func() {
-		It("should panic", func(done Done) {
-			Expect(func() {
+		// set up sessions resource
+		sessionsResource := sessions.NewResource(ctx, &sessions.Options{
+			Database:              db,
+			Renderer:              renderer,
+			PrivateSigningKey:     privateSigningKey,
+			PublicSigningKey:      publicSigningKey,
+			UserRepositoryFactory: usersResource.UserRepositoryFactory,
+		})
 
-				db := middlewares.NewMongoDB(&middlewares.MongoDBOptions{
-					ServerName:   "BadServerName",
-					DatabaseName: "BadDBName",
-					DialTimeout:  1,
-				})
-				db.NewSession()
-			}).Should(Panic())
-			close(done)
-		}, 15)
+		// init server
+		s := server.NewServer(&server.Config{
+			Context: ctx,
+		})
+
+		// set up router
+		ac := server.NewAccessController(ctx, renderer)
+		router := server.NewRouter(s.Context, ac)
+
+		// add REST resources to router
+		router.AddResources(sessionsResource, usersResource)
+
+		// add middlewares
+		s.UseContextMiddleware(renderer)
+		s.UseMiddleware(sessionsResource.NewAuthenticator())
+
+		s.UseContextMiddleware(renderer)
+
+		s.UseRouter(router)
+
+		It("should serve request", func() {
+			// run server and it shouldn't panic
+			go s.Run(":8001", 1*time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
+
+			// serve some urls
+			recorder := httptest.NewRecorder()
+			request, _ := http.NewRequest("GET", "/api/sessions", nil)
+
+			s.ServeHTTP(recorder, request)
+
+			Expect(recorder.Code).To(Equal(http.StatusForbidden))
+
+			// gracefully stops server
+			s.Stop()
+
+		})
 	})
 })

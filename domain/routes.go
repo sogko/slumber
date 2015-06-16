@@ -1,10 +1,12 @@
 package domain
 
+import "net/http"
+
 // RouteHandlerVersion type
 type RouteHandlerVersion string
 
 // RouteHandlers is a map of route version to its handler
-type RouteHandlers map[RouteHandlerVersion]ContextHandlerFunc
+type RouteHandlers map[RouteHandlerVersion]http.HandlerFunc
 
 // Route type
 // Note that DefaultVersion must exists in RouteHandlers map
@@ -15,6 +17,7 @@ type Route struct {
 	Pattern        string
 	DefaultVersion RouteHandlerVersion
 	RouteHandlers  RouteHandlers
+	ACLHandler     ACLHandlerFunc
 }
 
 // Routes type

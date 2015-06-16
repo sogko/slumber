@@ -1,5 +1,0 @@
-mode: atomic
-github.com/sogko/slumber/controllers/helpers.go:21.115,24.16 3 3
-github.com/sogko/slumber/controllers/helpers.go:28.2,28.12 1 2
-github.com/sogko/slumber/controllers/helpers.go:24.16,27.3 2 1
-github.com/sogko/slumber/controllers/helpers.go:32.110,37.2 1 2

@@ -4,67 +4,58 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/middlewares"
+	"github.com/sogko/slumber/middlewares/context"
+	"github.com/sogko/slumber/middlewares/renderer"
 	"github.com/sogko/slumber/server"
 	"github.com/sogko/slumber/test_helpers"
 	"net/http"
 	"net/http/httptest"
 )
 
-func handleStub(version string) domain.ContextHandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request, ctx domain.IContext) {
-		r := ctx.GetRendererCtx(req)
-		r.JSON(w, http.StatusOK, map[string]interface{}{
-			"version": version,
-		})
-	}
-}
-
 var _ = Describe("Router", func() {
 	var s *server.Server
 	var route domain.Route
-	var aclMap domain.ACLMap
 	var request *http.Request
 	var recorder *httptest.ResponseRecorder
 	var bodyJSON map[string]interface{}
-
-	var dbOptions = middlewares.MongoDBOptions{
-		ServerName:   TestDatabaseServerName,
-		DatabaseName: TestDatabaseName,
+	handleStub := func(ctx domain.IContext, version string) http.HandlerFunc {
+		return func(w http.ResponseWriter, req *http.Request) {
+			renderer.GetRendererCtx(ctx, req).Render(w, req, http.StatusOK, map[string]interface{}{
+				"version": version,
+			})
+		}
 	}
-
-	var renderOptions = middlewares.RendererOptions{}
-
-	// define test route
+	handleAcl := func(req *http.Request, user domain.IUser) (bool, string) {
+		return true, ""
+	}
 	route = domain.Route{
 		Name:           "Test",
 		Method:         "GET",
 		Pattern:        "/api/test",
 		DefaultVersion: "0.2",
-		RouteHandlers: domain.RouteHandlers{
-			"0.1": handleStub("0.1"),
-			"0.2": handleStub("0.2"),
-			"0.3": handleStub("0.3"),
-		},
+		RouteHandlers:  domain.RouteHandlers{},
+		ACLHandler:     handleAcl,
 	}
 
-	aclMap = domain.ACLMap{
-		"Test": func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
-			return true, ""
-		},
-	}
+	r := renderer.New(&renderer.Options{IndentJSON: true}, renderer.JSON)
 
 	Describe("Test API versioning", func() {
 
 		BeforeEach(func() {
+			ctx := context.New()
+			route.RouteHandlers = domain.RouteHandlers{
+				"0.1": handleStub(ctx, "0.1"),
+				"0.2": handleStub(ctx, "0.2"),
+				"0.3": handleStub(ctx, "0.3"),
+			}
 			routes := &domain.Routes{route}
 			s = server.NewServer(&server.Config{
-				Database:       &dbOptions,
-				Renderer:       &renderOptions,
-				Routes:         routes,
-				TokenAuthority: &middlewares.TokenAuthorityOptions{},
-				ACLMap:         &aclMap,
-			}).SetupRoutes()
+				Context: ctx,
+			})
+			router := server.NewRouter(ctx, nil)
+			router.AddRoutes(routes)
+			s.UseContextMiddleware(r)
+			s.UseRouter(router)
 
 			// record HTTP responses
 			recorder = httptest.NewRecorder()
@@ -149,37 +140,60 @@ var _ = Describe("Router", func() {
 		})
 	})
 
-	Describe("Bad routes definition (undefined)", func() {
+	Describe("AddRoutes()", func() {
+		Context("Bad routes definition (undefined)", func() {
+			It("should not panic", func() {
+				Expect(func() {
+					ctx := context.New()
+					router := server.NewRouter(ctx, nil)
+					router.AddRoutes(nil)
+				}).ShouldNot(Panic())
+			})
 
-		It("should panic", func() {
-			Expect(func() {
-				s = server.NewServer(&server.Config{
-					Database: &dbOptions,
-					Renderer: &renderOptions,
-				}).SetupRoutes()
-
-			}).Should(Panic())
 		})
+		Context("Bad routes definition (missing default version handler)", func() {
+			It("should panic", func() {
+				Expect(func() {
+					ctx := context.New()
+					route.RouteHandlers = domain.RouteHandlers{
+						"0.1": handleStub(ctx, "0.1"),
+						"0.2": handleStub(ctx, "0.2"),
+						"0.3": handleStub(ctx, "0.3"),
+					}
+					route.DefaultVersion = "missinghandler"
+					routes := &domain.Routes{route}
+					router := server.NewRouter(ctx, nil)
+					router.AddRoutes(routes)
+				}).Should(Panic())
+			})
 
+		})
 	})
-	Describe("Bad routes definition (missing default version handler)", func() {
+	Describe("AddResources()", func() {
+		Context("Valid IResource", func() {
+			It("should not panic", func() {
+				Expect(func() {
+					ctx := context.New()
+					router := server.NewRouter(ctx, nil)
+					testResources := test_helpers.NewTestResource(ctx, r, &test_helpers.TestResourceOptions{})
+					router.AddResources(testResources)
+				}).ShouldNot(Panic())
+			})
 
-		It("should panic", func() {
-			Expect(func() {
-				routes := &domain.Routes{
-					domain.Route{"Test", "GET", "/api/test", "missingDefaultVersion", domain.RouteHandlers{
-						"0.1": handleStub("0.1"),
-					}},
-				}
-				s = server.NewServer(&server.Config{
-					Database: &dbOptions,
-					Renderer: &renderOptions,
-					Routes:   routes,
-				}).SetupRoutes()
-
-			}).Should(Panic())
 		})
+		Context("Invalid IResource", func() {
+			It("should panic", func() {
+				Expect(func() {
+					ctx := context.New()
+					router := server.NewRouter(ctx, nil)
+					testResources := test_helpers.NewTestResource(ctx, r, &test_helpers.TestResourceOptions{
+						NilRoutes: true,
+					})
+					router.AddResources(testResources)
+				}).Should(Panic())
+			})
 
+		})
 	})
 
 })

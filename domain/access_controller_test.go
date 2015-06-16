@@ -10,7 +10,7 @@ import (
 var _ = Describe("AccessController Tests", func() {
 	Describe("ACLMap Struct", func() {
 		Describe("Append()", func() {
-			stub := func(user *domain.User, req *http.Request, ctx domain.IContext) (bool, string) {
+			stub := func(req *http.Request, user domain.IUser) (bool, string) {
 				return true, ""
 			}
 			firstMap := domain.ACLMap{
