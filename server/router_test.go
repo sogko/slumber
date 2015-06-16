@@ -14,7 +14,6 @@ import (
 
 var _ = Describe("Router", func() {
 	var s *server.Server
-	var route domain.Route
 	var request *http.Request
 	var recorder *httptest.ResponseRecorder
 	var bodyJSON map[string]interface{}
@@ -28,25 +27,27 @@ var _ = Describe("Router", func() {
 	handleAcl := func(req *http.Request, user domain.IUser) (bool, string) {
 		return true, ""
 	}
-	route = domain.Route{
-		Name:           "Test",
-		Method:         "GET",
-		Pattern:        "/api/test",
-		DefaultVersion: "0.2",
-		RouteHandlers:  domain.RouteHandlers{},
-		ACLHandler:     handleAcl,
-	}
+
 
 	r := renderer.New(&renderer.Options{IndentJSON: true}, renderer.JSON)
 
 	Describe("Test API versioning", func() {
 
+		var route domain.Route
+
 		BeforeEach(func() {
 			ctx := context.New()
-			route.RouteHandlers = domain.RouteHandlers{
-				"0.1": handleStub(ctx, "0.1"),
-				"0.2": handleStub(ctx, "0.2"),
-				"0.3": handleStub(ctx, "0.3"),
+			route = domain.Route{
+				Name:           "Test",
+				Method:         "GET",
+				Pattern:        "/api/test",
+				DefaultVersion: "0.2",
+				RouteHandlers:  domain.RouteHandlers{
+					"0.1": handleStub(ctx, "0.1"),
+					"0.2": handleStub(ctx, "0.2"),
+					"0.3": handleStub(ctx, "0.3"),
+				},
+				ACLHandler:     handleAcl,
 			}
 			routes := &domain.Routes{route}
 			s = server.NewServer(&server.Config{
@@ -155,13 +156,20 @@ var _ = Describe("Router", func() {
 			It("should panic", func() {
 				Expect(func() {
 					ctx := context.New()
-					route.RouteHandlers = domain.RouteHandlers{
-						"0.1": handleStub(ctx, "0.1"),
-						"0.2": handleStub(ctx, "0.2"),
-						"0.3": handleStub(ctx, "0.3"),
+					routes := &domain.Routes{
+						domain.Route{
+							Name:           "Test",
+							Method:         "GET",
+							Pattern:        "/api/test",
+							DefaultVersion: "missinghandler",
+							RouteHandlers:  domain.RouteHandlers{
+								"0.1": handleStub(ctx, "0.1"),
+								"0.2": handleStub(ctx, "0.2"),
+								"0.3": handleStub(ctx, "0.3"),
+							},
+							ACLHandler:     handleAcl,
+						},
 					}
-					route.DefaultVersion = "missinghandler"
-					routes := &domain.Routes{route}
 					router := server.NewRouter(ctx, nil)
 					router.AddRoutes(routes)
 				}).Should(Panic())
