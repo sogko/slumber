@@ -7,6 +7,7 @@ import (
 )
 
 const defaultForbiddenAccessMessage = "Forbidden (403)"
+const defaultOKAccessMessage = "OK"
 
 type ErrorResponse struct {
 	Message string `json:"message,omitempty"`
@@ -46,7 +47,10 @@ func (ac *AccessController) IsHTTPRequestAuthorized(req *http.Request, ctx domai
 	}
 
 	result, message := fn(req, user)
-	if message == "" {
+	if result && message == "" {
+		message = defaultOKAccessMessage
+	}
+	if !result && message == "" {
 		message = defaultForbiddenAccessMessage
 	}
 	return result, message
