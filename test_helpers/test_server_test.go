@@ -1,6 +1,8 @@
 package test_helpers_test
 
 import (
+	"net/http"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/sogko/slumber-sessions"
@@ -10,8 +12,6 @@ import (
 	"github.com/sogko/slumber/middlewares/renderer"
 	"github.com/sogko/slumber/test_helpers"
 	"gopkg.in/mgo.v2/bson"
-	"net/http"
-	"net/http/httptest"
 )
 
 var _ = Describe("Test Server", func() {
@@ -50,6 +50,8 @@ var _ = Describe("Test Server", func() {
 			})
 
 			sessionsResource = sessions.NewResource(ctx, &sessions.Options{
+				PrivateSigningKey:     privateSigningKey,
+				PublicSigningKey:      publicSigningKey,
 				Database:              ts.Database,
 				Renderer:              ts.Renderer,
 				UserRepositoryFactory: usersResource.UserRepositoryFactory,
@@ -61,6 +63,7 @@ var _ = Describe("Test Server", func() {
 		Context("Basic request", func() {
 			It("returns status code of StatusOK (200)", func() {
 				var response test_helpers.TestResponseBody
+				ts.Run()
 				recorder := ts.Request("GET", "/api/test", nil, &response, nil)
 
 				Expect(recorder.Code).To(Equal(http.StatusOK))
@@ -71,6 +74,7 @@ var _ = Describe("Test Server", func() {
 		Context("Non-empty JSON valid body", func() {
 			It("returns status code of StatusOK (200)", func() {
 				var response test_helpers.TestResponseBody
+				ts.Run()
 				recorder := ts.Request("POST", "/api/test", test_helpers.TestRequestBody{
 					Value: "string",
 				}, &response, nil)
@@ -83,6 +87,7 @@ var _ = Describe("Test Server", func() {
 		Context("Non-empty JSON invalid body", func() {
 			It("returns status code of StatusBadRequest (400)", func() {
 				var response test_helpers.TestResponseBody
+				ts.Run()
 				recorder := ts.Request("POST", "/api/test", "INVALID", &response, nil)
 
 				Expect(recorder.Code).To(Equal(http.StatusBadRequest))
@@ -94,6 +99,7 @@ var _ = Describe("Test Server", func() {
 			Context("without sessions.Authenticator enabled", func() {
 				It("returns status code of StatusUnauthorized (401)", func() {
 					var response test_helpers.TestResponseBody
+					ts.Run()
 					recorder := ts.Request("GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
 						Token: "invalidrandomtokenshould401",
 					})
@@ -106,6 +112,7 @@ var _ = Describe("Test Server", func() {
 
 					// add sessions authenticator middleware
 					ts.AddMiddlewares(sessionsResource.NewAuthenticator())
+					ts.Run()
 
 					recorder := ts.Request("GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
 						Token: "invalidrandomtokenshould401",
@@ -130,6 +137,7 @@ var _ = Describe("Test Server", func() {
 				}
 
 				var response test_helpers.TestResponseBody
+				ts.Run()
 				recorder := ts.Request("GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
 					APIUser: &user,
 				})

@@ -3,12 +3,13 @@ package test_helpers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sogko/slumber/domain"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
-	"log"
-	"io/ioutil"
 	"strings"
+
+	"github.com/sogko/slumber/domain"
 )
 
 type TestRequestBody struct {
@@ -65,7 +66,7 @@ func (resource *TestResource) Routes() *domain.Routes {
 	}
 }
 func (resource *TestResource) Render(w http.ResponseWriter, req *http.Request, status int, v interface{}) {
-	resource.Renderer.Render(w, req, status, v)
+	resource.Renderer.JSON(w, status, v)
 }
 func (resource *TestResource) HandleAllACL(req *http.Request, user domain.IUser) (bool, string) {
 	return true, ""

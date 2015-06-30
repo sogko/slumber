@@ -28,7 +28,6 @@ var _ = Describe("Router", func() {
 		return true, ""
 	}
 
-
 	r := renderer.New(&renderer.Options{IndentJSON: true}, renderer.JSON)
 
 	Describe("Test API versioning", func() {
@@ -42,12 +41,12 @@ var _ = Describe("Router", func() {
 				Method:         "GET",
 				Pattern:        "/api/test",
 				DefaultVersion: "0.2",
-				RouteHandlers:  domain.RouteHandlers{
+				RouteHandlers: domain.RouteHandlers{
 					"0.1": handleStub(ctx, "0.1"),
 					"0.2": handleStub(ctx, "0.2"),
 					"0.3": handleStub(ctx, "0.3"),
 				},
-				ACLHandler:     handleAcl,
+				ACLHandler: handleAcl,
 			}
 			routes := &domain.Routes{route}
 			s = server.NewServer(&server.Config{
@@ -162,12 +161,12 @@ var _ = Describe("Router", func() {
 							Method:         "GET",
 							Pattern:        "/api/test",
 							DefaultVersion: "missinghandler",
-							RouteHandlers:  domain.RouteHandlers{
+							RouteHandlers: domain.RouteHandlers{
 								"0.1": handleStub(ctx, "0.1"),
 								"0.2": handleStub(ctx, "0.2"),
 								"0.3": handleStub(ctx, "0.3"),
 							},
-							ACLHandler:     handleAcl,
+							ACLHandler: handleAcl,
 						},
 					}
 					router := server.NewRouter(ctx, nil)

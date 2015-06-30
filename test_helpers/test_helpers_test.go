@@ -1,11 +1,12 @@
 package test_helpers_test
 
 import (
+	"net/http/httptest"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sogko/slumber/test_helpers"
-	"net/http/httptest"
 	"github.com/sogko/slumber/middlewares/context"
+	"github.com/sogko/slumber/test_helpers"
 )
 
 var _ = Describe("Test Helpers", func() {
@@ -89,7 +90,7 @@ var _ = Describe("Test Helpers", func() {
 			}))
 		})
 
-		It("should panic if data is an invalid json ", func() {
+		It("should not panic if data is an invalid json ", func() {
 			data := []byte("{this is an invalid json}")
 
 			var recorder *httptest.ResponseRecorder = httptest.NewRecorder()
@@ -98,7 +99,7 @@ var _ = Describe("Test Helpers", func() {
 			Expect(func() {
 				var responseType TestResponseType
 				test_helpers.DecodeResponseToType(recorder, &responseType)
-			}).Should(Panic())
+			}).ShouldNot(Panic())
 		})
 	})
 })
