@@ -46,6 +46,12 @@ func NewTestServer(options *TestServerOptions) *TestServer {
 
 	ta := options.TokenAuthority
 	if ta == nil {
+		if options.PrivateSigningKey == nil {
+			panic("TestServer.options.PrivateSigningKey is required")
+		}
+		if options.PublicSigningKey == nil {
+			panic("TestServer.options.PublicSigningKey is required")
+		}
 		ta = sessions.NewTokenAuthority(&sessions.TokenAuthorityOptions{
 			PrivateSigningKey: options.PrivateSigningKey,
 			PublicSigningKey:  options.PublicSigningKey,
@@ -92,7 +98,6 @@ func NewTestServer(options *TestServerOptions) *TestServer {
 	// add middlewares
 	for _, middleware := range options.Middlewares {
 		ts.AddMiddlewares(middleware)
-
 	}
 
 	return &ts
@@ -115,9 +120,12 @@ func (ts *TestServer) AddMiddlewares(middlewares ...interface{}) {
 		}
 	}
 }
-func (ts *TestServer) Request(recorder *httptest.ResponseRecorder, method string, urlStr string, body interface{}, targetResponse interface{}, authOptions *AuthOptions) {
-
+func (ts *TestServer) Run() {
 	ts.Server.UseRouter(ts.Router)
+}
+func (ts *TestServer) Request(method string, urlStr string, body interface{}, targetResponse interface{}, authOptions *AuthOptions) *httptest.ResponseRecorder {
+
+	recorder := httptest.NewRecorder()
 
 	var request *http.Request
 
@@ -145,9 +153,8 @@ func (ts *TestServer) Request(recorder *httptest.ResponseRecorder, method string
 			request.Header.Set("Authorization", fmt.Sprintf("Bearer %v", authOptions.Token))
 		}
 	}
-
 	// serve request
 	ts.Server.ServeHTTP(recorder, request)
 	DecodeResponseToType(recorder, &targetResponse)
-
+	return recorder
 }

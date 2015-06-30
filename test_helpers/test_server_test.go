@@ -61,9 +61,7 @@ var _ = Describe("Test Server", func() {
 		Context("Basic request", func() {
 			It("returns status code of StatusOK (200)", func() {
 				var response test_helpers.TestResponseBody
-				recorder := httptest.NewRecorder()
-
-				ts.Request(recorder, "GET", "/api/test", nil, &response, nil)
+				recorder := ts.Request("GET", "/api/test", nil, &response, nil)
 
 				Expect(recorder.Code).To(Equal(http.StatusOK))
 				Expect(response.Result).To(Equal("OK"))
@@ -73,9 +71,7 @@ var _ = Describe("Test Server", func() {
 		Context("Non-empty JSON valid body", func() {
 			It("returns status code of StatusOK (200)", func() {
 				var response test_helpers.TestResponseBody
-				recorder := httptest.NewRecorder()
-
-				ts.Request(recorder, "POST", "/api/test", test_helpers.TestRequestBody{
+				recorder := ts.Request("POST", "/api/test", test_helpers.TestRequestBody{
 					Value: "string",
 				}, &response, nil)
 
@@ -87,9 +83,7 @@ var _ = Describe("Test Server", func() {
 		Context("Non-empty JSON invalid body", func() {
 			It("returns status code of StatusBadRequest (400)", func() {
 				var response test_helpers.TestResponseBody
-				recorder := httptest.NewRecorder()
-
-				ts.Request(recorder, "POST", "/api/test", "INVALID", &response, nil)
+				recorder := ts.Request("POST", "/api/test", "INVALID", &response, nil)
 
 				Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 				Expect(response.Result).To(Equal("NOT_OK"))
@@ -100,8 +94,7 @@ var _ = Describe("Test Server", func() {
 			Context("without sessions.Authenticator enabled", func() {
 				It("returns status code of StatusUnauthorized (401)", func() {
 					var response test_helpers.TestResponseBody
-					recorder := httptest.NewRecorder()
-					ts.Request(recorder, "GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
+					recorder := ts.Request("GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
 						Token: "invalidrandomtokenshould401",
 					})
 					Expect(recorder.Code).To(Equal(http.StatusOK))
@@ -110,12 +103,11 @@ var _ = Describe("Test Server", func() {
 			Context("with sessions.Authenticator enabled", func() {
 				It("returns status code of StatusUnauthorized (401)", func() {
 					var response test_helpers.TestResponseBody
-					recorder := httptest.NewRecorder()
 
 					// add sessions authenticator middleware
 					ts.AddMiddlewares(sessionsResource.NewAuthenticator())
 
-					ts.Request(recorder, "GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
+					recorder := ts.Request("GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
 						Token: "invalidrandomtokenshould401",
 					})
 					Expect(recorder.Code).To(Equal(http.StatusUnauthorized))
@@ -138,8 +130,7 @@ var _ = Describe("Test Server", func() {
 				}
 
 				var response test_helpers.TestResponseBody
-				recorder := httptest.NewRecorder()
-				ts.Request(recorder, "GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
+				recorder := ts.Request("GET", "/api/test", nil, &response, &test_helpers.AuthOptions{
 					APIUser: &user,
 				})
 				Expect(recorder.Code).To(Equal(http.StatusOK))

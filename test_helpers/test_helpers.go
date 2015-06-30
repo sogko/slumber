@@ -6,6 +6,9 @@ import (
 	"github.com/sogko/slumber/domain"
 	"net/http"
 	"net/http/httptest"
+	"log"
+	"io/ioutil"
+	"strings"
 )
 
 type TestRequestBody struct {
@@ -124,11 +127,18 @@ func MapFromJSON(data []byte) map[string]interface{} {
 // DecodeResponseToType is a test helper function that decodes recorded response body to
 // a specific struct type
 // Note: this functions panics on error. For test usage only, not for production.
-func DecodeResponseToType(recorder *httptest.ResponseRecorder, target interface{}) map[string]interface{} {
-	decoder := json.NewDecoder(recorder.Body)
+func DecodeResponseToType(recorder *httptest.ResponseRecorder, target interface{}) error {
+	// clone request body reader so that we can have a nicer error message
+	bodyString := ""
+	if b, err := ioutil.ReadAll(recorder.Body); err == nil {
+		bodyString = string(b)
+	}
+	readerClone := strings.NewReader(bodyString)
+
+	decoder := json.NewDecoder(readerClone)
 	err := decoder.Decode(target)
 	if err != nil {
-		panic(fmt.Sprintf("DecodeResponseToType(): Not a valid JSON body\n%v", recorder.Body.String()))
+		log.Println(fmt.Sprintf("DecodeResponseToType(): %v \n%v", err.Error(), bodyString))
 	}
-	return nil
+	return err
 }
