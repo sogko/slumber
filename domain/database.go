@@ -12,6 +12,7 @@ type Index mgo.Index
 type IDatabase interface {
 	Insert(name string, obj interface{}) error
 	Update(name string, query Query, change Change, result interface{}) error
+	UpdateAll(name string, query Query, change Query) (int, error)
 	FindOne(name string, query Query, result interface{}) error
 	FindAll(name string, query Query, result interface{}, limit int, sort string) error
 	Count(name string, query Query) (int, error)

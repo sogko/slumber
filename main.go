@@ -75,5 +75,7 @@ func main() {
 	s.UseRouter(router)
 
 	// bam!
-	s.Run(":3001", 10*time.Second)
+	s.Run(":3001", server.Options{
+		Timeout: 10*time.Second,
+	})
 }

@@ -26,6 +26,12 @@ type Config struct {
 	Context domain.IContext
 }
 
+// Options for running the server
+type Options struct {
+	Timeout time.Duration
+	ShutdownHandler func()
+}
+
 // NewServer Returns a new Server object
 func NewServer(options *Config) *Server {
 
@@ -56,11 +62,12 @@ func (s *Server) UseRouter(router *Router) *Server {
 	return s
 }
 
-func (s *Server) Run(address string, timeout time.Duration) *Server {
-	s.timeout = timeout
+func (s *Server) Run(address string, options Options) *Server {
+	s.timeout = options.Timeout
 	s.gracefulServer = &graceful.Server{
-		Timeout: timeout,
-		Server:  &http.Server{Addr: address, Handler: s.negroni},
+		Timeout:           options.Timeout,
+		Server:            &http.Server{Addr: address, Handler: s.negroni},
+		ShutdownInitiated: options.ShutdownHandler,
 	}
 	s.gracefulServer.ListenAndServe()
 	return s

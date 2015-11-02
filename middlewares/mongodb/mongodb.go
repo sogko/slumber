@@ -68,6 +68,14 @@ func (db *MongoDB) Update(name string, query domain.Query, change domain.Change,
 	return err
 }
 
+func (db *MongoDB) UpdateAll(name string, query domain.Query, change domain.Query) (int, error) {
+	changeInfo, err := db.currentDb.C(name).UpdateAll(query, change)
+	if changeInfo == nil {
+		return 0, err
+	}
+	return changeInfo.Updated, err
+}
+
 func (db *MongoDB) RemoveOne(name string, query domain.Query) error {
 	return db.currentDb.C(name).Remove(query)
 }

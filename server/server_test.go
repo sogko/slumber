@@ -80,7 +80,9 @@ var _ = Describe("Server", func() {
 
 		It("should serve request", func() {
 			// run server and it shouldn't panic
-			go s.Run(":8001", 1*time.Millisecond)
+			go s.Run(":8001", server.Options{
+				Timeout: 1*time.Millisecond,
+			})
 			time.Sleep(100 * time.Millisecond)
 
 			// serve some urls
