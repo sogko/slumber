@@ -133,7 +133,9 @@ $ openssl rsa -in demo.rsa -pubout > demo.rsa.pub
 ## Architecture
 <a href="http://i.imgur.com/HwIhPz7.png"><img src="http://i.imgur.com/HwIhPz7.png"/ height="750"/></a>
 
+
 ## TODO
+* [x] Add open-source license (MIT) 
 * [x] API versioning using Accept header, for e.g: `Accept=application/json;version=1.0,*/*`
 * [x] User and roles management
 * [x] Session management using JWT tokens
