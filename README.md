@@ -88,7 +88,7 @@ go test
 
 # or
 
-$GOPATH/bin/ginkgo -r --randomizeAllSpecs -p -node=4
+$GOPATH/bin/ginkgo -r --randomizeAllSpecs -p -nodes=4
 
 # "-r" watches recursively (including test suites for sub-packages)
 # "-p -nodes=4" parallelize test execution with 4 worker nodes
