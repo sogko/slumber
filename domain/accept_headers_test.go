@@ -4,7 +4,7 @@ import (
 	"fmt"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/grsouza/slumber/domain"
+	"github.com/sogko/slumber/domain"
 )
 
 var _ = Describe("AcceptHeaders Tests", func() {

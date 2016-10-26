@@ -7,12 +7,12 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/grsouza/slumber-sessions"
-	"github.com/grsouza/slumber-users"
-	"github.com/grsouza/slumber/middlewares/context"
-	"github.com/grsouza/slumber/middlewares/mongodb"
-	"github.com/grsouza/slumber/middlewares/renderer"
-	"github.com/grsouza/slumber/server"
+	"github.com/sogko/slumber-sessions"
+	"github.com/sogko/slumber-users"
+	"github.com/sogko/slumber/middlewares/context"
+	"github.com/sogko/slumber/middlewares/mongodb"
+	"github.com/sogko/slumber/middlewares/renderer"
+	"github.com/sogko/slumber/server"
 )
 
 func main() {

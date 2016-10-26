@@ -1,6 +1,6 @@
-[![slumber](http://i.imgur.com/RXDVdB0.png)](https://github.com/grsouza/slumber)
-[![Build Status](https://drone.io/github.com/grsouza/slumber/status.png)](https://drone.io/github.com/grsouza/slumber/latest)
-[![Coverage Status](https://coveralls.io/repos/grsouza/slumber/badge.svg?branch=master)](https://coveralls.io/r/grsouza/slumber?branch=master)
+[![slumber](http://i.imgur.com/RXDVdB0.png)](https://github.com/sogko/slumber)
+[![Build Status](https://drone.io/github.com/sogko/slumber/status.png)](https://drone.io/github.com/sogko/slumber/latest)
+[![Coverage Status](https://coveralls.io/repos/sogko/slumber/badge.svg?branch=master)](https://coveralls.io/r/sogko/slumber?branch=master)
 
 A complete example of a REST-ful API server in written in Go (golang).
 
@@ -43,10 +43,10 @@ To run an instance of a server example:
 
 ```bash
 # get go-package and put it in your go-workspace
-go get github.com/grsouza/slumber
+go get github.com/sogko/slumber
 
 # go to package root folder
-cd $GOPATH/src/github.com/grsouza/slumber
+cd $GOPATH/src/github.com/sogko/slumber
 
 # install dependencies
 go get
@@ -103,12 +103,12 @@ $GOPATH/bin/ginkgo watch -r -p -nodes=4
 ```
 
 ## Code coverage
-Coveralls.io link: [https://coveralls.io/r/grsouza/slumber]
+Coveralls.io link: [https://coveralls.io/r/sogko/slumber]
 
 To generate coverage profile
 
 ```bash
-cd $GOPATH/src/github.com/grsouza/slumber
+cd $GOPATH/src/github.com/sogko/slumber
 
 # run test recursively and generate coverage data for each package
 $GOPATH/bin/ginkgo -r -cover -p
@@ -120,7 +120,7 @@ $GOPATH/bin/gover . slumber.coverprofile
 To view coverage
 
 ```bash
-go tool cover -html=$GOPATH/src/github.com/grsouza/slumber/slumber.coverprofile
+go tool cover -html=$GOPATH/src/github.com/sogko/slumber/slumber.coverprofile
 ```
 
 ## Sessions Management

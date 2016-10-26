@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/grsouza/slumber/domain"
+	"github.com/sogko/slumber/domain"
 	"net/http"
 )
 

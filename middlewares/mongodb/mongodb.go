@@ -1,7 +1,7 @@
 package mongodb
 
 import (
-	"github.com/grsouza/slumber/domain"
+	"github.com/sogko/slumber/domain"
 	"gopkg.in/mgo.v2"
 	"net/http"
 	"time"
