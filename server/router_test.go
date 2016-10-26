@@ -3,11 +3,11 @@ package server_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/middlewares/context"
-	"github.com/sogko/slumber/middlewares/renderer"
-	"github.com/sogko/slumber/server"
-	"github.com/sogko/slumber/test_helpers"
+	"github.com/grsouza/slumber/domain"
+	"github.com/grsouza/slumber/middlewares/context"
+	"github.com/grsouza/slumber/middlewares/renderer"
+	"github.com/grsouza/slumber/server"
+	"github.com/grsouza/slumber/test_helpers"
 	"net/http"
 	"net/http/httptest"
 )
