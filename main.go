@@ -3,14 +3,16 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/grsouza/slumber-sessions"
 	"github.com/grsouza/slumber-users"
 	"github.com/grsouza/slumber/middlewares/context"
 	"github.com/grsouza/slumber/middlewares/mongodb"
 	"github.com/grsouza/slumber/middlewares/renderer"
 	"github.com/grsouza/slumber/server"
-	"io/ioutil"
-	"time"
 )
 
 func main() {
@@ -24,6 +26,17 @@ func main() {
 	publicSigningKey, err := ioutil.ReadFile("keys/demo.rsa.pub")
 	if err != nil {
 		panic(errors.New(fmt.Sprintf("Error loading public signing key: %v", err.Error())))
+	}
+
+	// Casting keys loaded to proper type
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateSigningKey)
+	if err != nil {
+		panic(errors.New(fmt.Sprintf("Error parsing private key: %v", err.Error())))
+	}
+
+	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicSigningKey)
+	if err != nil {
+		panic(errors.New(fmt.Sprintf("Error parsing public key: %v", err.Error())))
 	}
 
 	// create current project context
@@ -49,8 +62,8 @@ func main() {
 
 	// set up sessions resource
 	sessionsResource := sessions.NewResource(ctx, &sessions.Options{
-		PrivateSigningKey:     privateSigningKey,
-		PublicSigningKey:      publicSigningKey,
+		PrivateSigningKey:     privateKey,
+		PublicSigningKey:      publicKey,
 		Database:              db,
 		Renderer:              renderer,
 		UserRepositoryFactory: usersResource.UserRepositoryFactory,
@@ -76,6 +89,6 @@ func main() {
 
 	// bam!
 	s.Run(":3001", server.Options{
-		Timeout: 10*time.Second,
+		Timeout: 10 * time.Second,
 	})
 }
