@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	"github.com/sogko/slumber/domain"
+	"github.com/grsouza/slumber/domain"
 )
 
 type TestRequestBody struct {

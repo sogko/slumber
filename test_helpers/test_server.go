@@ -2,23 +2,25 @@ package test_helpers
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"github.com/sogko/slumber-sessions"
-	sessionsDomain "github.com/sogko/slumber-sessions/domain"
-	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/middlewares/context"
-	"github.com/sogko/slumber/middlewares/mongodb"
-	"github.com/sogko/slumber/middlewares/renderer"
-	"github.com/sogko/slumber/server"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/grsouza/slumber-sessions"
+	sessionsDomain "github.com/grsouza/slumber-sessions/domain"
+	"github.com/grsouza/slumber/domain"
+	"github.com/grsouza/slumber/middlewares/context"
+	"github.com/grsouza/slumber/middlewares/mongodb"
+	"github.com/grsouza/slumber/middlewares/renderer"
+	"github.com/grsouza/slumber/server"
 )
 
 type TestServerOptions struct {
 	RequestAcceptHeader string
-	PrivateSigningKey   []byte
-	PublicSigningKey    []byte
+	PrivateSigningKey   *rsa.PrivateKey
+	PublicSigningKey    *rsa.PublicKey
 	TokenAuthority      sessionsDomain.ITokenAuthority
 	Database            domain.IDatabase
 	Renderer            domain.IRenderer

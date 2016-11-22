@@ -3,18 +3,20 @@ package server_test
 import (
 	"errors"
 	"fmt"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/sogko/slumber-sessions"
-	"github.com/sogko/slumber-users"
-	"github.com/sogko/slumber/middlewares/context"
-	"github.com/sogko/slumber/middlewares/mongodb"
-	"github.com/sogko/slumber/middlewares/renderer"
-	"github.com/sogko/slumber/server"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"time"
+
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/grsouza/slumber-sessions"
+	"github.com/grsouza/slumber-users"
+	"github.com/grsouza/slumber/middlewares/context"
+	"github.com/grsouza/slumber/middlewares/mongodb"
+	"github.com/grsouza/slumber/middlewares/renderer"
+	"github.com/grsouza/slumber/server"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Server", func() {
@@ -27,6 +29,17 @@ var _ = Describe("Server", func() {
 	publicSigningKey, err := ioutil.ReadFile("../keys/demo.rsa.pub")
 	if err != nil {
 		panic(errors.New(fmt.Sprintf("Error loading public signing key: %v", err.Error())))
+	}
+
+	// Casting keys loaded to proper type
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateSigningKey)
+	if err != nil {
+		panic(errors.New(fmt.Sprintf("Error parsing private key: %v", err.Error())))
+	}
+
+	publicKey, err := jwt.ParseRSAPublicKeyFromPEM(publicSigningKey)
+	if err != nil {
+		panic(errors.New(fmt.Sprintf("Error parsing public key: %v", err.Error())))
 	}
 
 	Describe("Basic sanity test", func() {
@@ -53,8 +66,8 @@ var _ = Describe("Server", func() {
 		sessionsResource := sessions.NewResource(ctx, &sessions.Options{
 			Database:              db,
 			Renderer:              renderer,
-			PrivateSigningKey:     privateSigningKey,
-			PublicSigningKey:      publicSigningKey,
+			PrivateSigningKey:     privateKey,
+			PublicSigningKey:      publicKey,
 			UserRepositoryFactory: usersResource.UserRepositoryFactory,
 		})
 
@@ -81,7 +94,7 @@ var _ = Describe("Server", func() {
 		It("should serve request", func() {
 			// run server and it shouldn't panic
 			go s.Run(":8001", server.Options{
-				Timeout: 1*time.Millisecond,
+				Timeout: 1 * time.Millisecond,
 			})
 			time.Sleep(100 * time.Millisecond)
 

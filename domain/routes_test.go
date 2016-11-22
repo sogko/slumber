@@ -3,7 +3,7 @@ package domain_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/sogko/slumber/domain"
+	"github.com/grsouza/slumber/domain"
 )
 
 var _ = Describe("Routes Tests", func() {
