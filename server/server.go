@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/context"
-	"github.com/sogko/slumber/domain"
+	"github.com/grsouza/slumber/domain"
 	"gopkg.in/tylerb/graceful.v1"
 	"net/http"
 	"time"

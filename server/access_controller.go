@@ -1,8 +1,8 @@
 package server
 
 import (
-	//	"github.com/sogko/slumber/controllers"
-	"github.com/sogko/slumber/domain"
+	//	"github.com/grsouza/slumber/controllers"
+	"github.com/grsouza/slumber/domain"
 	"net/http"
 )
 

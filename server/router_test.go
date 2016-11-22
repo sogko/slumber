@@ -1,15 +1,16 @@
 package server_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	"github.com/sogko/slumber/domain"
-	"github.com/sogko/slumber/middlewares/context"
-	"github.com/sogko/slumber/middlewares/renderer"
-	"github.com/sogko/slumber/server"
-	"github.com/sogko/slumber/test_helpers"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/grsouza/slumber/domain"
+	"github.com/grsouza/slumber/middlewares/context"
+	"github.com/grsouza/slumber/middlewares/renderer"
+	"github.com/grsouza/slumber/server"
+	"github.com/grsouza/slumber/test_helpers"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Router", func() {
@@ -64,7 +65,6 @@ var _ = Describe("Router", func() {
 		Context("when user does not specify API version", func() {
 
 			It("should use default API version", func() {
-
 				request, _ = http.NewRequest("GET", "/api/test", nil)
 				s.ServeHTTP(recorder, request)
 				bodyJSON = test_helpers.MapFromJSON(recorder.Body.Bytes())
