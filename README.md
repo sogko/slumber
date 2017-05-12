@@ -131,7 +131,7 @@ $ openssl rsa -in demo.rsa -pubout > demo.rsa.pub
 ```
 
 ## Architecture
-<a href="http://i.imgur.com/HwIhPz7.png"><img src="http://i.imgur.com/HwIhPz7.png"/ height="750"/></a>
+<a href="http://i.imgur.com/HwIhPz7.png"><img src="http://i.imgur.com/HwIhPz7.png" height="750"></a>
 
 
 ## TODO
