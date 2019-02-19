@@ -22,13 +22,13 @@ type Renderer struct {
 	DefaultRenderType string
 }
 
-// New( Returns a new Renderer object
+// New Returns a new Renderer object
 func New(options *Options, defaultRenderType string) *Renderer {
 	r := render.New(render.Options(*options))
 	return &Renderer{r, options, defaultRenderType}
 }
 
-// HandlerWithNext Returns a middleware HandlerFunc that saves the Render object into request context
+// Handler Returns a middleware HandlerFunc that saves the Render object into request context
 func (renderer *Renderer) Handler(w http.ResponseWriter, req *http.Request, next http.HandlerFunc, ctx domain.IContext) {
 	SetRendererCtx(ctx, req, renderer)
 	next(w, req)
